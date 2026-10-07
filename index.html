@@ -1,0 +1,1592 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F7F5EF">
+  <title>Qadeer Traders | Billing & Inventory</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{
+      --primary:#0F766E;
+      --primary-hover:#0B5F58;
+      --primary-soft:#CCEFEA;
+      --accent:#0F766E;
+      --accent-soft:#CCEFEA;
+      --sidebar-bg:#0B3B36;
+      --sidebar-text:#CFE5E1;
+      --sidebar-active-bg:#0F766E;
+      --sidebar-active-text:#FFFFFF;
+      --bg:#F7F5EF;
+      --card:#FFFFFF;
+      --border:#E6E1D3;
+      --text:#1F2937;
+      --text-muted:#6B7280;
+      --success:#15803D;
+      --danger:#B91C1C;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"Segoe UI",Arial,sans-serif}
+    button,input,textarea,select{font:inherit}
+    button{cursor:pointer}
+    .app-shell{min-height:100vh;display:grid;grid-template-columns:230px minmax(0,1fr)}
+    .sidebar{position:sticky;top:0;height:100vh;min-height:0;overflow-y:auto;overscroll-behavior:contain;align-self:start;background:var(--sidebar-bg);color:var(--sidebar-text);display:flex;flex-direction:column;padding:25px 16px}
+    .brand-mark{width:42px;height:42px;border-radius:12px;background:var(--sidebar-bg);color:var(--accent);border:1px solid var(--accent);display:grid;place-items:center;font-family:Georgia,serif;font-weight:700;font-size:19px}
+    .nav-link{display:flex;align-items:center;gap:12px;color:#bdcec6;padding:11px 12px;border-radius:8px;font-size:13px;font-weight:600;transition:.16s}
+    .nav-link:hover,.nav-link.active{background:rgba(255,255,255,.11);color:white}
+    .nav-link.active{box-shadow:inset 3px 0 #d1a15f}
+    .nav-link i{width:16px;text-align:center;font-size:14px}
+    .main-area{min-width:0}
+    .topbar{position:sticky;top:0;z-index:30;height:76px;padding:0 34px;border-bottom:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:space-between}
+    .content{max-width:1440px;width:100%;margin:0 auto;padding:28px 34px 42px}
+    .billing-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(315px,.85fr);gap:20px;align-items:start}
+    .invoice-preview-sticky{position:sticky;top:96px;align-self:start;height:fit-content;max-height:calc(100vh - 112px);overflow-y:auto;overscroll-behavior:contain}
+    .page{display:none}.page.active{display:block}
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:9px}
+    .field-label{display:block;font-size:11px;font-weight:700;color:#53635c;margin-bottom:6px;letter-spacing:.02em}
+    .field{display:block;width:100%;height:39px;padding:0 11px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:13px;outline:none;transition:border-color .15s,box-shadow .15s}
+    textarea.field{height:auto;min-height:76px;padding:10px 11px;resize:vertical}
+    .field:focus{border-color:#6f9e8b;box-shadow:0 0 0 3px rgba(83,137,115,.12)}
+    .btn{min-height:38px;padding:0 14px;border:1px solid transparent;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:700;transition:.15s;white-space:nowrap}
+    .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-hover)}
+    .btn-outline{background:#fff;color:#34443d;border-color:#dce4de}.btn-outline:hover{background:#f5f8f5}
+    .btn-soft{background:#edf4ef;color:#285747}.btn-soft:hover{background:#e0eee5}
+    .btn-danger{color:#a33c34;background:#fff;border-color:#f0d9d7}.btn-danger:hover{background:#fff5f4}
+    .icon-button{width:32px;height:32px;border:1px solid #e2e8e3;border-radius:6px;background:white;color:#697871;display:grid;place-items:center}
+    .icon-button:hover{color:#a33c34;border-color:#e8c8c5}
+    .section-title{font-size:14px;font-weight:750;color:#26342e}
+    .section-caption{font-size:11px;color:var(--text-muted);margin-top:3px}
+    .stat-card{padding:16px 18px;background:var(--card);border:1px solid var(--border);border-radius:8px}
+    .stat-label{font-size:11px;color:#718078;font-weight:650}
+    .stat-value{font-size:22px;line-height:1.25;font-weight:750;color:#20332c;margin-top:8px}
+    .stat-icon{height:34px;width:34px;border-radius:8px;display:grid;place-items:center;background:#edf4ef;color:#376a55}
+    .table-wrap{overflow:auto}
+    table{width:100%;border-collapse:collapse;text-align:left}
+    th{font-size:10px;color:#718078;text-transform:uppercase;letter-spacing:.06em;font-weight:750;background:#f8faf8;padding:11px 14px;white-space:nowrap}
+    td{font-size:12px;padding:12px 14px;border-top:1px solid #edf1ee;vertical-align:middle}
+    .pill{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:700}
+    .pill-green{background:#e9f4eb;color:#33704a}.pill-amber{background:#fff3df;color:#9a6b24}.pill-red{background:#fcebea;color:#a4423b}
+    .product-row{display:grid;grid-template-columns:minmax(135px,1.5fr) 54px repeat(4,minmax(72px,1fr)) 30px;gap:7px;align-items:end;padding:12px 0;border-bottom:1px solid #edf1ee}
+    .product-row:last-child{border-bottom:0}
+    .product-row .field{height:36px;font-size:12px;padding:0 9px}
+    .product-row label{font-size:10px}
+    .product-row .field-label{display:none}
+    .line-value{height:36px;display:flex;align-items:center;font-size:11px;font-weight:700;color:#34483e;white-space:nowrap}
+    .line-profit{color:#36704f}
+    .invoice-paper{background:white;color:#202b28;padding:25px 24px;border:1px solid #e5eae6;border-radius:7px}
+    #invoicePreview.invoice-paper{padding:0;border:0;background:transparent}
+    .receipt{width:100%;padding:18px 18px 16px;background:#fff;color:#202b28;border:1px solid #e5eae6;border-radius:7px;font:10px/1.45 Arial,sans-serif}
+    .pdf-export-root{display:block;width:100%;height:auto;min-height:0;overflow:visible;padding:0;background:#fff}
+    .receipt-header,.receipt-meta,.receipt-customer,.receipt-totals,.receipt-footer,.receipt tr{break-inside:avoid;page-break-inside:avoid}
+    .receipt table{break-inside:auto;page-break-inside:auto}
+    .receipt-header{text-align:center;padding-bottom:12px;margin-bottom:10px;border-bottom:1px dashed #cfd8d1}
+    .receipt-business-name{font:700 19px/1.25 Georgia,"Times New Roman",serif;color:#203a30}
+    .receipt-business-details{margin-top:4px;color:#66746d;font-size:9px;line-height:1.5}
+    .receipt-meta{margin-bottom:12px}
+    .receipt-meta-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:4px}
+    .receipt-label{color:#718078}
+    .receipt-customer{padding:8px 0;margin-bottom:8px;border-top:1px solid #edf1ee;border-bottom:1px solid #edf1ee}
+    .receipt-customer-row{display:grid;grid-template-columns:62px minmax(0,1fr);gap:4px;line-height:1.6;text-align:left;overflow-wrap:anywhere}
+    .receipt-customer-row>:last-child{text-align:right}
+    .receipt table{width:100%;table-layout:fixed;border-collapse:collapse;text-align:left}
+    .receipt th{padding:8px 4px;background:#f8faf8;color:#718078;font-size:9px;font-weight:700;text-transform:uppercase;white-space:nowrap}
+    .receipt td{padding:8px 4px;border-top:1px solid #edf1ee;vertical-align:top;font-size:10px;overflow-wrap:anywhere}
+    .receipt th:first-child,.receipt td:first-child{width:60%}
+    .receipt th:nth-child(2),.receipt td:nth-child(2){width:15%}
+    .receipt th:nth-child(3),.receipt td:nth-child(3){width:25%}
+    .receipt .receipt-numeric{text-align:right}
+    .receipt-item-name{font-weight:600}
+    .receipt-empty{text-align:center;color:#87928c;padding:18px 4px!important}
+    .receipt-totals{margin-top:8px;padding-top:8px;border-top:1px solid #dce4de}
+    .receipt-total-row{display:flex;justify-content:space-between;gap:12px;margin-bottom:4px}
+    .receipt-total-value{text-align:right}
+    .receipt-grand-total{padding-top:2px;margin-top:5px;font-size:13px;font-weight:700}
+    .receipt-balance-due{padding-top:5px;margin-top:5px;border-top:1px solid #dce4de;font-weight:700}
+    .receipt-notes{margin-top:8px;padding-top:7px;border-top:1px dashed #dce4de;overflow-wrap:anywhere}
+    .payment-context{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;padding:11px 12px;border:1px solid #e4ebe6;border-radius:6px;background:#f8faf8}
+    .payment-context-label{font-size:10px;font-weight:700;color:#718078;margin-bottom:4px}
+    .payment-context-value{font-size:12px;font-weight:600;color:#263b32;overflow-wrap:anywhere}
+    .receipt-footer{text-align:center;margin-top:14px;padding-top:10px;border-top:1px dashed #cfd8d1;color:#68756e;font-size:9px}
+    .pdf-export-root .receipt,#printInvoice .receipt{color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:0;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .pdf-export-root .receipt-business-name,#printInvoice .receipt-business-name{color:var(--sidebar-bg)}
+    .pdf-export-root .receipt-business-details,.pdf-export-root .receipt-label,.pdf-export-root .receipt-empty,.pdf-export-root .receipt-footer,#printInvoice .receipt-business-details,#printInvoice .receipt-label,#printInvoice .receipt-empty,#printInvoice .receipt-footer{color:var(--text-muted)}
+    .pdf-export-root .receipt-header,#printInvoice .receipt-header{border-bottom-color:var(--accent)}
+    .pdf-export-root .receipt-customer,#printInvoice .receipt-customer{border-color:var(--border)}
+    .pdf-export-root .receipt th,#printInvoice .receipt th{color:var(--sidebar-bg);background:var(--primary-soft);border-bottom:1px solid var(--border)}
+    .pdf-export-root .receipt td,#printInvoice .receipt td{border-color:var(--border);color:var(--text)}
+    .pdf-export-root .receipt-totals,#printInvoice .receipt-totals{border-color:var(--border)}
+    .pdf-export-root .receipt-footer,#printInvoice .receipt-footer{border-top-color:var(--border)}
+    .pdf-export-root .receipt *,#printInvoice .receipt *{opacity:1!important;text-shadow:none!important;-webkit-font-smoothing:auto}
+    .empty-state{padding:35px 16px;text-align:center;color:#84918b;font-size:12px}
+    .toast{position:fixed;right:24px;bottom:24px;z-index:100;transform:translateY(12px);opacity:0;pointer-events:none;transition:.2s;background:#203b33;color:#fff;border-radius:7px;padding:12px 16px;box-shadow:0 8px 24px #142f2b30;font-size:12px}
+    .toast.show{transform:translateY(0);opacity:1}
+    .modal-backdrop{position:fixed;inset:0;background:#13221e88;z-index:50;display:none;align-items:center;justify-content:center;padding:16px}
+    .modal-backdrop.open{display:flex}
+    .modal{width:min(720px,100%);max-height:90vh;overflow:auto;background:#f6f8f6;border-radius:10px;padding:18px}
+    .mobile-menu{display:none}
+    #printInvoice{display:none}
+    @media(max-width:900px){.content{padding:24px 22px}.topbar{padding:0 22px}.product-row{grid-template-columns:minmax(115px,1.5fr) 48px repeat(4,minmax(64px,1fr)) 28px;gap:5px}}
+    @media(max-width:1279px){.billing-layout{grid-template-columns:minmax(0,1fr)}}
+    @media(min-width:1280px){.content{padding-right:408px}.billing-layout{grid-template-columns:minmax(0,1fr)}.invoice-preview-sticky{position:fixed;right:24px;top:96px;width:360px;height:fit-content;max-height:calc(100vh - 112px);z-index:100}}
+    @media(max-width:680px){.app-shell{min-height:100vh;display:block}.sidebar{position:static;height:auto;min-height:0;overflow:visible;padding:13px 15px;display:block}.sidebar-brand{display:flex;align-items:center;justify-content:space-between}.sidebar-nav{display:flex;gap:5px;overflow:auto;margin-top:12px;padding-bottom:2px}.nav-link{flex:0 0 auto;padding:9px 10px;font-size:11px}.nav-link.active{box-shadow:inset 0 -2px #d1a15f}.nav-link i{width:auto}.sidebar-footer{display:none}.topbar{height:60px;padding:0 16px}.content{padding:18px 14px 30px}.invoice-preview-sticky{position:static;max-height:none;overflow:visible}.items-heading{display:none!important}.product-row{grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;padding:10px 0}.product-row>.item-details{grid-column:1/9}.product-row>div:nth-child(2){grid-column:9/12}.product-row>div:nth-child(3),.product-row>div:nth-child(4),.product-row>div:nth-child(5),.product-row>div:nth-child(6){grid-column:span 3}.product-row>.remove-item{grid-column:12/13;align-self:end;width:28px;height:36px}.product-row .field{padding:0 6px;font-size:11px}.product-row label{font-size:9px}.line-value{font-size:10px}.hide-mobile{display:none}.stat-value{font-size:18px}.invoice-paper{padding:18px 14px}.receipt{padding:18px 14px}.header-actions .btn span{display:none}.header-actions .btn{width:38px;padding:0}.modal{padding:10px}}
+    @media(max-width:680px){.product-row .field-label{display:block}}
+    @media print{
+      @page{size:A4 portrait;margin:0}
+      html,body{width:auto!important;min-width:0!important;margin:0!important;padding:0!important;background:white!important;color:#111!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      body *{visibility:hidden!important}
+      #printInvoice,#printInvoice *{visibility:visible!important}
+      #printInvoice{display:block!important;position:absolute!important;left:0!important;top:0!important;width:210mm!important;box-sizing:border-box!important;margin:0!important;padding:10mm!important;border:0!important;background:white!important;color:#111!important}
+      #printInvoice .receipt{width:100%!important}
+    }
+
+    body{background:var(--bg);color:var(--text);font-family:"Aptos","Segoe UI",Arial,sans-serif}
+    .app-shell{grid-template-columns:238px minmax(0,1fr)}
+    .sidebar{background:#172522;color:#f5f8f6;padding:26px 17px}
+    .brand-mark{border-radius:10px;background:#d9f0e5;color:#116747;box-shadow:0 5px 16px #07151155}
+    .nav-link{border-radius:7px;color:#bdcbc5;transition:background .18s ease,color .18s ease,transform .18s ease}
+    .nav-link:hover{background:#ffffff12;color:#fff;transform:translateX(2px)}
+    .nav-link.active{background:#ffffff12;color:#fff;box-shadow:inset 3px 0 #38b487}
+    .topbar{height:74px;background:#202d29;color:#f7faf8;border-bottom:1px solid #34433e;padding:0 36px;box-shadow:0 4px 16px #10201b12}
+    .topbar #topTitle{color:#f5f8f6!important}
+    .topbar #topSubtitle{color:#afbeb7!important}
+    .content{max-width:1600px;padding:30px 36px 48px}
+    .billing-layout{grid-template-columns:minmax(0,1fr) minmax(300px,360px);gap:24px}
+    .invoice-preview-sticky{position:sticky;right:auto;top:94px;width:auto;height:fit-content;max-height:calc(100vh - 110px);overflow-y:auto;z-index:auto;border-color:#dce5df;box-shadow:0 10px 28px #18332a0d}
+    .content .panel{background:#fff;border-color:#dfe7e2;border-radius:9px;box-shadow:0 3px 12px #18332a08}
+    .section-title,.content h1{color:#163b30!important}
+    .section-caption{color:#74827c}
+    .field-label{color:#42554c;letter-spacing:.01em}
+    .field{min-width:0;max-width:100%;height:41px;border-color:#d7e1db;border-radius:6px;background:#fff;color:#1c2925;box-shadow:0 1px 2px #18332a05}
+    .field::placeholder{color:#9aa7a0}
+    .field:hover{border-color:#aebfb5}
+    .field:focus{border-color:#13845f;box-shadow:0 0 0 3px #13845f1c}
+    .btn{min-height:39px;border-radius:6px;font-weight:700;box-shadow:0 1px 2px #17252212;transition:background .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px #17252217}
+    .btn:active{transform:translateY(0);box-shadow:0 1px 2px #17252212}
+    .btn-primary{background:#087f5b;color:#fff}
+    .btn-primary:hover{background:#066c4d}
+    .btn-outline{background:#fff;color:#34473e;border-color:#d4dfd8}
+    .btn-outline:hover{background:#f2f7f4;border-color:#a9bdb1;color:#173b30}
+    .btn-soft{background:#e8f4ed;color:#126344}
+    .btn-soft:hover{background:#dcefe4}
+    .btn-danger{box-shadow:none}
+    .icon-button{border-color:#dbe4de;border-radius:6px;color:#66766e;transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease}
+    .icon-button:hover{background:#fff5f3;transform:translateY(-1px)}
+    .topbar .btn-outline{background:#2b3a35;color:#f4f8f5;border-color:#45564f;box-shadow:none}
+    .topbar .btn-outline:hover{background:#354740;border-color:#60756a;color:#fff}
+    .topbar .btn-primary{background:#0d8a62;box-shadow:0 3px 10px #071a1433}
+    .topbar .btn-primary:hover{background:#0a7654}
+    .items-heading{color:#708078;border-bottom:1px solid #e7ede9}
+    .product-row{border-color:#e8eeea}
+    .line-value{color:#34483e}
+    .line-profit,#billProfitText{color:#0d7954}
+    #subtotalText{color:#263b32}
+    #grandTotalText{color:#075f43!important}
+    .stat-card{border-color:#dfe7e2;border-radius:8px;box-shadow:0 3px 12px #18332a08}
+    .stat-label{color:#718078}
+    .stat-value{color:#164334}
+    .stat-icon{background:#e6f3eb;color:#087f5b}
+    th{background:#eef3f0;color:#54665d;border-bottom:1px solid #dfe7e2}
+    tbody tr:nth-child(even){background:#f7f9f8}
+    tbody tr:hover{background:#eff5f1}
+    td{border-color:#e7ede9;color:#293932}
+    .pill-green{background:#e3f3e9;color:#176741}
+    .receipt{padding:21px 20px 18px;border-color:#d6e0da;border-radius:8px;box-shadow:0 8px 22px #182e2510;font:10px/1.5 "Segoe UI",Arial,sans-serif}
+    .receipt-business-name{color:#153c30}
+    .receipt-header{border-bottom-color:#d8e2dc}
+    .receipt-customer{border-color:#e5ece8}
+    .receipt table th{background:#f2f6f3;color:#506259}
+    .receipt table td{border-color:#e7ede9}
+    .receipt-totals{border-color:#dce6df}
+    .receipt-grand-total{color:#075f43}
+    .receipt-balance-due{border-color:#dce6df}
+    .receipt-notes{border-color:#d8e2dc}
+    .payment-context{border-color:#dfe7e2;background:#f6f9f7}
+    .receipt-footer{border-top-color:#d8e2dc}
+    .pdf-export-root .receipt,#printInvoice .receipt{border:1px solid #d9e2dd;border-radius:0;box-shadow:none}
+    .table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .modal-backdrop{background:#101c1888;backdrop-filter:blur(3px)}
+    .modal{background:#f5f7f6;border:1px solid #dfe7e2;border-radius:9px;box-shadow:0 24px 80px #0e211b33}
+    .toast{background:#173d31;box-shadow:0 10px 28px #10231d2e}
+    :focus-visible{outline:2px solid #15956c;outline-offset:2px}
+
+    @media(max-width:1200px){
+      .billing-layout{grid-template-columns:minmax(0,1fr)}
+      .invoice-preview-sticky{position:static;top:auto;width:auto;height:fit-content;max-height:none;overflow:visible}
+    }
+    @media(max-width:820px){
+      .app-shell{display:block;min-height:100vh}
+      .sidebar{position:relative;top:auto;height:auto;min-height:0;overflow:visible;padding:15px 20px}
+      .sidebar-brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
+      .sidebar-nav{display:flex;flex-direction:row;gap:6px;overflow-x:auto;margin-top:14px;padding:2px 0 4px;scrollbar-width:thin}
+      .nav-link{flex:0 0 auto;padding:10px 11px;font-size:12px}
+      .nav-link.active{box-shadow:inset 0 -2px #38b487}
+      .nav-link:hover{transform:none}
+      .nav-link i{width:auto}
+      .sidebar-footer{display:none}
+      .content{padding:25px 24px 40px}
+      .topbar{padding:0 24px}
+      .invoice-preview-sticky{position:static}
+      .billing-layout{gap:18px}
+    }
+    @media(max-width:680px){
+      .sidebar{padding:13px 14px}
+      .content{padding:20px 14px 32px}
+      .topbar{height:auto;min-height:64px;padding:10px 14px;gap:10px}
+      .topbar #topTitle{font-size:14px}
+      .header-actions{flex:0 0 auto;gap:6px}
+      .header-actions .btn{width:36px;min-height:36px;padding:0}
+      .billing-layout{gap:16px}
+      .content .panel{border-radius:8px}
+      .invoice-preview-sticky{padding:12px}
+      .receipt{padding:18px 14px 16px}
+      .modal-backdrop{padding:10px}
+    }
+    @media(prefers-reduced-motion:reduce){
+      *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+    }
+    .topbar-leading{display:flex;align-items:center;gap:12px;min-width:0}
+    .mobile-menu-toggle{display:none;flex:0 0 38px;width:38px;height:38px}
+    #sidebarBackdrop{display:none}
+    @media(max-width:1023px){
+      body{overflow-x:hidden}
+      .app-shell{display:block;min-height:100vh}
+      .sidebar{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);height:100dvh;min-height:0;overflow-y:auto;overscroll-behavior:contain;z-index:71;display:flex;flex-direction:column;padding:22px 16px;transform:translateX(-105%);transition:transform .24s ease;box-shadow:12px 0 36px #07151130}
+      .sidebar.sidebar-open{transform:translateX(0)}
+      .sidebar-brand{display:flex;align-items:center;justify-content:space-between}
+      .sidebar-nav{display:flex;flex-direction:column;gap:4px;overflow-x:hidden;overflow-y:auto;margin-top:28px;padding:0}
+      .nav-link{flex:0 0 auto;padding:11px 12px;font-size:13px}
+      .nav-link.active{box-shadow:inset 3px 0 #38b487}
+      .nav-link:hover{transform:none}
+      .nav-link i{width:16px}
+      .sidebar-footer{display:block;margin-top:auto;padding-top:24px}
+      #sidebarBackdrop{position:fixed;inset:0;z-index:70;display:block;background:#101c1888;opacity:0;visibility:hidden;transition:opacity .24s ease,visibility .24s ease}
+      #sidebarBackdrop.backdrop-open{opacity:1;visibility:visible}
+      .mobile-menu-toggle{display:grid}
+      .topbar{position:sticky;top:0;z-index:45;padding:0 24px;gap:12px}
+      .content{width:100%;max-width:100%;padding:24px}
+      .billing-layout{grid-template-columns:minmax(0,1fr);gap:18px}
+      .invoice-preview-sticky{position:static;top:auto;width:auto;height:fit-content;max-height:none;overflow:visible}
+      .table-wrap{overflow:visible}
+    }
+    @media(max-width:1023px){
+      .table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap tr,.table-wrap th,.table-wrap td{display:block;width:100%}
+      .table-wrap thead{display:none}
+      .table-wrap tbody{padding:6px}
+      .table-wrap tbody tr{display:grid;grid-template-columns:minmax(0,1fr);gap:0;margin:0 0 9px;padding:4px 9px;border:1px solid #e2eae5;border-radius:7px;background:#fff;box-shadow:0 2px 8px #18332a08}
+      .table-wrap tbody tr:last-child{margin-bottom:0}
+      .table-wrap tbody tr:nth-child(even),.table-wrap tbody tr:hover{background:#fff}
+      .table-wrap tbody td{display:flex;justify-content:space-between;align-items:center;gap:10px;min-width:0;padding:7px 2px;border-top:1px solid #edf1ee;overflow-wrap:anywhere;font-size:11px}
+      .table-wrap tbody td:first-child{border-top:0}
+      .table-wrap tbody td::before{content:attr(data-label);flex:0 1 45%;min-width:0;font-size:9px;font-weight:700;line-height:1.35;color:#718078;text-transform:uppercase;letter-spacing:.03em;overflow-wrap:anywhere;word-break:normal}
+      .table-cell-value{flex:1 1 55%;min-width:0;text-align:right;overflow-wrap:anywhere;word-break:break-word;white-space:normal!important;line-height:1.4}
+      .table-cell-value>*{max-width:100%}
+      .table-cell-value details{width:100%}
+      .table-cell-value summary{white-space:normal!important;overflow-wrap:anywhere}
+      .table-wrap tbody td:empty::after{content:'-';color:#84918b}
+      .table-wrap tbody td[colspan]::before{display:none}
+      .table-wrap tbody td[colspan]{display:block;text-align:center}
+      .table-wrap tbody td:last-child .table-cell-value{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:5px}
+      .table-wrap tbody td:last-child .table-cell-value>div{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:5px}
+      .table-wrap details{min-width:0}
+      .table-wrap details>div{overflow-wrap:anywhere}
+      .table-wrap .btn{white-space:normal;min-width:0;max-width:100%;font-size:10px}
+      .table-wrap .icon-button{flex:0 0 32px}
+    }
+    @media(max-width:680px){
+      .topbar{min-height:64px;height:auto;padding:10px 14px}
+      .topbar-leading{gap:9px}
+      .topbar #topTitle{font-size:14px}
+      .content{padding:18px 14px 30px}
+      .header-actions{flex:0 0 auto;gap:5px}
+      .header-actions .btn{width:36px;min-height:36px;padding:0}
+      .header-actions .btn span{display:none}
+    }
+    @media(prefers-reduced-motion:reduce){
+      .sidebar,#sidebarBackdrop{transition:none}
+    }
+    body{background:#f1f4f6;color:#202924}
+    .app-shell{background:#f1f4f6;color:#202924}
+    .main-area{background:#f1f4f6}
+    .sidebar{background:#202a35;color:#f4f7f5;border-right:1px solid #34404b;box-shadow:4px 0 18px #15202a12}
+    .brand-mark{background:#e8f3eb;color:#126238;border:1px solid #c8ddce;box-shadow:0 3px 10px #10171324;font-family:"Segoe UI",Arial,sans-serif}
+    .nav-link{border:1px solid transparent;border-radius:8px;color:#c5cdd2;transition:background .18s ease,color .18s ease,border-color .18s ease,box-shadow .18s ease}
+    .nav-link:hover{background:#ffffff0c;color:#fff;border-color:#46515b;transform:none}
+    .nav-link.active{background:#123d29;color:#fff;border-color:#23633e;box-shadow:inset 3px 0 #23a455}
+    .nav-link.active i{color:#61c985}
+    .sidebar-footer{color:#aab5ba}
+    .topbar{background:#fff;color:#202924;border-bottom:1px solid #dce4df;box-shadow:0 3px 12px #1b29200a}
+    .topbar #topTitle{color:#202924!important}
+    .topbar #topSubtitle{color:#68756d!important}
+    .topbar-leading #topTitle{text-shadow:none}
+    .content{color:#27312b}
+    .content .panel,.stat-card{background:#fff;border:1px solid #dce4df;border-radius:10px;box-shadow:0 5px 18px #1f322510;backdrop-filter:none;animation:none}
+    .section-title,.content h1{color:#202924!important}
+    .section-caption,.content p{color:#68756d!important}
+    .field-label{color:#3b4941}
+    .field{border:1px solid #d6dfd9;border-radius:7px;background:#fff;color:#202924;box-shadow:0 1px 2px #1f322508}
+    .field::placeholder{color:#929d96}
+    .field:hover{border-color:#9bad9f;background:#fff}
+    .field:focus{border-color:#168347;background:#fff;box-shadow:0 0 0 3px #1683471c}
+    .btn{border:1px solid #d4ddd7;border-radius:8px;background:#fff;color:#34423a;box-shadow:0 2px 5px #1f322510;transition:background .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease;animation:none}
+    .btn:hover{background:#f2f7f3;border-color:#a9c4b1;color:#145c31;box-shadow:0 4px 11px #1f32251b;transform:translateY(-1px)}
+    .btn-primary,.topbar .btn-primary{background:#107c41;color:#fff;border-color:#107c41;box-shadow:0 3px 9px #107c4130;animation:none}
+    .btn-primary:hover,.topbar .btn-primary:hover{background:#0c6936;border-color:#0c6936;color:#fff;box-shadow:0 5px 13px #107c4138}
+    #addItemBtn,#printBillBtn,#downloadBillBtn,#topPrintBtn,#topDownloadBtn{background:#107c41;color:#fff;border-color:#107c41;border-radius:8px;box-shadow:0 3px 9px #107c4128;animation:none}
+    #addItemBtn:hover,#printBillBtn:hover,#downloadBillBtn:hover,#topPrintBtn:hover,#topDownloadBtn:hover{background:#0c6936;border-color:#0c6936;color:#fff;box-shadow:0 5px 13px #107c4138}
+    .btn-outline,.topbar .btn-outline{background:#fff;color:#34423a;border-color:#d4ddd7}
+    .btn-outline:hover,.topbar .btn-outline:hover{background:#f2f7f3;border-color:#a9c4b1;color:#145c31}
+    .btn-soft{background:#e8f4ec;color:#145c31;border-color:#d4e7da}
+    .btn-soft:hover{background:#dcefe2;color:#104b2a;border-color:#b9d9c4}
+    .btn-danger{color:#9c3832;background:#fff;border-color:#ebd3d0}
+    .icon-button{border:1px solid #d6dfd9;border-radius:7px;background:#fff;color:#647168;transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease}
+    .icon-button:hover{background:#edf5ef;border-color:#a9c4b1;color:#107c41;box-shadow:0 3px 9px #1f322510;transform:translateY(-1px)}
+    .stat-card{padding:18px 19px}
+    .stat-label{color:#68756d}
+    .stat-value{color:#202924}
+    .stat-icon{background:#e8f4ec;color:#107c41;border:1px solid #d0e6d7}
+    .table-wrap{color:#27312b}
+    th{background:#f2f5f3;color:#526158;border-bottom:1px solid #dce4df}
+    td{border-color:#e5ebe7;color:#27312b}
+    tbody tr:nth-child(even){background:#fafcfb}
+    tbody tr:hover{background:#f1f7f3}
+    .pill-green{background:#e5f4e9;color:#176338;border:1px solid #d2e9d8}
+    .pill-amber{background:#fbf2e2;color:#875f20;border:1px solid #eedebc}
+    .pill-red{background:#faeae8;color:#963b35;border:1px solid #eed2ce}
+    .product-row,.items-heading{border-color:#e5ebe7}
+    .line-value{color:#34423a}
+    .line-profit,#billProfitText{color:#107c41}
+    #subtotalText{color:#313d35}
+    #grandTotalText{color:#145d34!important;text-shadow:none}
+    .invoice-preview-sticky{background:#fff!important;border:1px solid #dce4df!important;border-radius:10px!important;box-shadow:0 8px 24px #1f322512!important;backdrop-filter:none;animation:none}
+    .invoice-paper{background:#fff;color:#202924;border-color:#dce4df;border-radius:8px}
+    .receipt{padding:22px 20px 19px;background:#fff;color:#252d28;border:1px solid #d8e1db;border-radius:8px;box-shadow:0 5px 16px #1f322510;backdrop-filter:none;font-family:"Aptos","Segoe UI",Arial,sans-serif;animation:none}
+    .pdf-export-root .receipt{animation:none!important;box-shadow:none!important;backdrop-filter:none!important}
+    .receipt-business-name{color:#174b2c;text-shadow:none}
+    .receipt-business-details,.receipt-label{color:#66736a}
+    .receipt-header{border-bottom-color:#dce5de}
+    .receipt-customer{border-color:#e1e8e3}
+    .receipt-customer-row strong{color:#202924}
+    .receipt table th{background:#f3f6f4;color:#526158;border-color:#dce4df}
+    .receipt table td{background:#fff;border-color:#e5ebe7;color:#27312b}
+    .receipt-total-row{color:#3c4740}
+    .receipt-grand-total{color:#202924}
+    .receipt-balance-due{border-color:#dce4df;color:#174b2c}
+    .receipt-notes{border-color:#dce4df}
+    .payment-context{background:#f6f8f6;border-color:#e0e7e2;border-radius:7px}
+    .payment-context-label{color:#68756d}
+    .payment-context-value{color:#26322b}
+    .receipt-footer{border-top-color:#dce5de;color:#66736a}
+    .modal{background:#fff;border-color:#dce4df;border-radius:10px;color:#27312b;box-shadow:0 20px 60px #17221c30;backdrop-filter:none}
+    .modal .section-title{color:#202924!important}
+    .modal .section-caption{color:#68756d}
+    .modal-backdrop{background:#17221c88;backdrop-filter:blur(2px)}
+    .toast{background:#20372a;color:#f4faf5;border:1px solid #2b6341;box-shadow:0 8px 24px #17221c2b}
+    :focus-visible{outline:2px solid #168347;outline-offset:2px}
+    @media(max-width:1023px){
+      .sidebar{background:#202a35}
+      .table-wrap tbody tr{border-color:#dce4df;background:#fff;box-shadow:0 3px 12px #1f32250d}
+      .table-wrap tbody tr:nth-child(even),.table-wrap tbody tr:hover{background:#fff}
+      .table-wrap tbody td{border-color:#e5ebe7;color:#27312b}
+      .table-wrap tbody td::before{color:#526158}
+    }
+    @media print{
+      body{background:#fff!important}
+      .receipt{animation:none!important;box-shadow:none!important;backdrop-filter:none!important}
+    }
+    body{background:var(--bg);color:var(--text)}
+    .app-shell,.main-area,.content{background:var(--bg);color:var(--text)}
+    .sidebar{background:var(--sidebar-bg);color:var(--sidebar-text);border-right:1px solid var(--primary-hover);box-shadow:4px 0 18px rgba(11,59,54,.06)}
+    .brand-mark{background:var(--sidebar-bg);color:var(--accent);border:1px solid var(--accent);box-shadow:0 3px 10px rgba(11,59,54,.12)}
+    .nav-link{color:var(--sidebar-text);border-color:transparent;border-radius:8px}
+    .nav-link:hover{background:rgba(207,229,225,.1);color:var(--card);border-color:rgba(207,229,225,.18);transform:none}
+    .nav-link.active{background:var(--sidebar-active-bg);color:var(--sidebar-active-text);border-color:var(--accent);box-shadow:inset 3px 0 var(--sidebar-bg),0 3px 10px rgba(11,59,54,.16)}
+    .nav-link.active i{color:var(--sidebar-active-text)}
+    .sidebar-footer{color:var(--sidebar-text)}
+    .topbar{background:var(--card);color:var(--text);border-bottom:1px solid var(--border);box-shadow:0 3px 14px rgba(11,59,54,.06)}
+    .topbar #topTitle{color:var(--text)!important}
+    .topbar #topSubtitle{color:var(--text-muted)!important}
+    .topbar-leading #topTitle{text-shadow:none}
+    .content .panel,.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 5px 18px rgba(11,59,54,.06);backdrop-filter:none;animation:none}
+    .section-title,.content h1{color:var(--text)!important}
+    .section-caption,.content p{color:var(--text-muted)!important}
+    .content [class*="text-[#"]{color:var(--text)!important}
+    .content [class*="bg-white"]{background:var(--card)!important;border-color:var(--border)!important}
+    .content [class*="bg-[#"]{background:var(--accent-soft)!important;border-color:var(--border)!important}
+    .content #todayLabel{color:var(--primary)!important}
+    .content #todayLabel i{color:var(--primary)}
+    .sidebar [class*="text-emerald-100"]{color:var(--sidebar-text)!important}
+    .content .panel [class*="rounded-full"]{background:var(--accent-soft)!important;color:var(--sidebar-bg)!important}
+    .content [class*="text-[#376a55]"],.content [class*="text-[#36704f]"],.line-profit,#billProfitText{color:var(--success)!important}
+    .field-label{color:var(--text)}
+    .field{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:7px;box-shadow:0 1px 2px rgba(11,59,54,.04)}
+    .field::placeholder{color:var(--text-muted)}
+    .field:hover{background:var(--card);border-color:var(--primary)}
+    .field:focus{background:var(--card);border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,118,110,.18)}
+    .btn{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;box-shadow:0 2px 5px rgba(11,59,54,.06);animation:none}
+    .btn:hover{background:var(--primary-soft);color:var(--sidebar-bg);border-color:var(--primary);box-shadow:0 4px 11px rgba(11,59,54,.12);transform:translateY(-1px)}
+    .btn-primary,#addItemBtn,#printBillBtn,#downloadBillBtn,#topPrintBtn,#topDownloadBtn{background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:8px;box-shadow:0 3px 9px rgba(11,59,54,.16);animation:none}
+    .btn-primary:hover,#addItemBtn:hover,#printBillBtn:hover,#downloadBillBtn:hover,#topPrintBtn:hover,#topDownloadBtn:hover{background:var(--primary-hover);color:#fff;border-color:var(--primary-hover);box-shadow:0 5px 13px rgba(11,59,54,.2)}
+    #topSaveBtn{background:var(--accent);color:var(--sidebar-active-text);border-color:var(--accent)}
+    #topSaveBtn:hover{background:var(--sidebar-active-bg);color:var(--sidebar-active-text);border-color:var(--sidebar-active-bg)}
+    .btn-outline,.topbar .btn-outline{background:var(--card);color:var(--text);border-color:var(--border)}
+    .btn-outline:hover,.topbar .btn-outline:hover{background:var(--primary-soft);color:var(--sidebar-bg);border-color:var(--primary)}
+    .btn-soft{background:var(--primary-soft);color:var(--sidebar-bg);border-color:var(--primary-soft)}
+    .btn-soft:hover{background:#b8e4de;color:var(--sidebar-bg);border-color:var(--primary)}
+    .btn-danger{background:var(--card);color:var(--danger);border-color:#e8c9c6}
+    .icon-button{background:var(--card);color:var(--primary);border:1px solid var(--border);border-radius:7px}
+    .icon-button:hover{background:var(--primary-soft);color:var(--sidebar-bg);border-color:var(--primary);box-shadow:0 3px 9px rgba(11,59,54,.1);transform:translateY(-1px)}
+    .stat-card{padding:18px 19px}
+    .stat-label{color:var(--text-muted)}
+    .stat-value{color:var(--text)}
+    .stat-icon{background:var(--primary-soft);color:var(--primary);border:1px solid var(--border)}
+    .table-wrap{color:var(--text)}
+    th{background:var(--primary-soft);color:var(--sidebar-bg);border-bottom:1px solid var(--border)}
+    .items-heading{background:var(--primary-soft);color:var(--sidebar-bg)!important;border-color:var(--border)}
+    td{background:transparent;border-color:var(--border);color:var(--text)}
+    tbody tr:nth-child(even){background:rgba(15,118,110,.025)}
+    tbody tr:hover{background:rgba(15,118,110,.06)}
+    .pill-green{background:var(--primary-soft);color:var(--sidebar-bg);border:1px solid var(--border)}
+    .pill-amber{background:var(--accent-soft);color:var(--sidebar-bg);border:1px solid var(--border)}
+    .pill-red{background:#fcebea;color:var(--danger);border:1px solid #efd2cf}
+    .product-row,.items-heading{border-color:var(--border)}
+    .line-value{color:var(--text)}
+    #subtotalText{color:var(--text)!important}
+    #grandTotalText{color:var(--primary)!important;text-shadow:none}
+    .invoice-preview-sticky{background:var(--card)!important;border:1px solid var(--border)!important;border-radius:10px!important;box-shadow:0 8px 24px rgba(11,59,54,.06)!important;backdrop-filter:none;animation:none}
+    .invoice-paper{background:transparent;color:var(--text);border-color:var(--border);border-radius:8px}
+    .receipt{padding:22px 20px 19px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;box-shadow:0 5px 16px rgba(11,59,54,.06);backdrop-filter:none;font-family:"Aptos","Segoe UI",Arial,sans-serif;animation:none}
+    .pdf-export-root .receipt{animation:none!important;box-shadow:none!important;backdrop-filter:none!important}
+    .receipt-business-name{color:var(--sidebar-bg);text-shadow:none}
+    .receipt-business-details,.receipt-label{color:var(--text-muted)}
+    .receipt-header{border-bottom-color:var(--accent)}
+    .receipt-customer{border-color:var(--border)}
+    .receipt-customer-row strong{color:var(--text)}
+    .receipt table th{background:var(--primary-soft);color:var(--sidebar-bg);border-color:var(--border)}
+    .receipt table td{background:var(--card);border-color:var(--border);color:var(--text)}
+    .receipt-total-row{color:var(--text)}
+    .receipt-grand-total{color:var(--primary)}
+    .receipt-balance-due{border-color:var(--border);color:var(--sidebar-bg)}
+    .receipt-notes{border-color:var(--border)}
+    .payment-context{background:var(--bg);border-color:var(--border);border-radius:7px}
+    .payment-context-label{color:var(--text-muted)}
+    .payment-context-value{color:var(--text)}
+    .receipt-footer{border-top-color:var(--border);color:var(--text-muted)}
+    .modal{background:var(--card);border-color:var(--border);border-radius:10px;color:var(--text);box-shadow:0 20px 60px rgba(11,59,54,.2);backdrop-filter:none}
+    .modal .section-title{color:var(--text)!important}
+    .modal .section-caption{color:var(--text-muted)}
+    .modal-backdrop{background:rgba(11,59,54,.55);backdrop-filter:blur(2px)}
+    .toast{background:var(--sidebar-bg);color:var(--card);border:1px solid var(--primary);box-shadow:0 8px 24px rgba(11,59,54,.2)}
+    :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+    @media(max-width:1023px){
+      .sidebar{background:var(--sidebar-bg)}
+      .table-wrap tbody tr{border-color:var(--border);background:var(--card);box-shadow:0 3px 12px rgba(11,59,54,.06)}
+      .table-wrap tbody tr:nth-child(even),.table-wrap tbody tr:hover{background:var(--card)}
+      .table-wrap tbody td{border-color:var(--border);color:var(--text)}
+      .table-wrap tbody td::before{color:var(--text-muted)}
+    }
+    @media print{
+      html,body{background:var(--card)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      #printInvoice{background:var(--card)!important}
+      .pdf-export-root .receipt,#printInvoice .receipt{background:var(--card)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside id="appSidebar" class="sidebar">
+      <div class="sidebar-brand">
+        <div class="flex items-center gap-3">
+          <div class="brand-mark">QT</div>
+          <div><div class="font-bold text-sm tracking-wide">Qadeer Traders</div><div class="text-[10px] text-emerald-100/60 mt-1">BILLING & INVENTORY</div></div>
+        </div>
+        <span class="hidden max-[680px]:block text-[10px] text-emerald-100/60">LAHORE</span>
+      </div>
+      <nav class="sidebar-nav mt-9 flex flex-col gap-1" aria-label="Main navigation">
+        <button class="nav-link active" data-page="billing"><i class="fa-solid fa-file-invoice-dollar"></i><span>New Bill</span></button>
+        <button class="nav-link hidden" data-page="inventory" data-admin-only><i class="fa-solid fa-boxes-stacked"></i><span>Stock & Purchases</span></button>
+        <button class="nav-link hidden" data-page="expenses" data-admin-only><i class="fa-solid fa-wallet"></i><span>Expenses</span></button>
+        <button class="nav-link hidden" data-page="history" data-admin-only><i class="fa-solid fa-clock-rotate-left"></i><span>Bill History</span></button>
+        <button class="nav-link hidden" data-page="credit" data-admin-only><i class="fa-solid fa-hand-holding-dollar"></i><span>Credit / Payment Ledger</span></button>
+        <button class="nav-link" data-page="financials"><i class="fa-solid fa-chart-line"></i><span>Admin / Profit Summary</span></button>
+        <button id="adminLogoutBtn" class="nav-link hidden" type="button"><i class="fa-solid fa-lock"></i><span>Lock Admin</span></button>
+      </nav>
+      <div class="sidebar-footer mt-auto pt-8">
+        <div class="border-t border-white/10 pt-4 px-2 text-[10px] leading-5 text-emerald-100/55">Building No. 216, Askari Bank<br>1st Floor, FF, Phase 4, DHA Lahore<br>03054003812</div>
+        <div class="mt-4 px-2 text-[10px] font-medium tracking-wide text-emerald-100/55">Powered by Qadeer Traders</div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="topbar-leading">
+          <button id="mobileMenuToggle" class="icon-button mobile-menu-toggle" type="button" aria-label="Open navigation menu" aria-controls="appSidebar" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+          <div>
+          <div id="topTitle" class="font-bold text-[15px] text-[#24362f]">Create a bill</div>
+          <div id="topSubtitle" class="text-[11px] text-[#829088] mt-1">Prepare a customer invoice</div>
+          </div>
+        </div>
+        <div class="header-actions flex gap-2">
+          <button id="topPrintBtn" class="btn btn-outline" type="button" title="Print current invoice"><i class="fa-solid fa-print"></i><span>Print</span></button>
+          <button id="topDownloadBtn" class="btn btn-outline download-bill-btn" type="button" title="Download invoice as PDF"><i class="fa-solid fa-download"></i><span>Download PDF</span></button>
+          <button id="topSaveBtn" class="btn btn-primary" type="button"><i class="fa-solid fa-floppy-disk"></i><span>Save Bill</span></button>
+        </div>
+      </header>
+
+      <div class="content">
+        <section id="page-billing" class="page active">
+          <div class="flex flex-wrap items-end justify-between gap-3 mb-5">
+            <div><h1 class="text-xl font-bold text-[#20342c]">Point of sale</h1><p class="text-xs text-[#77857e] mt-1">Build an invoice and keep your stock up to date.</p></div>
+            <div class="text-[11px] text-[#77857e] bg-white border border-[#e4eae6] rounded-md px-3 py-2"><i class="fa-regular fa-calendar mr-1.5"></i><span id="todayLabel"></span></div>
+          </div>
+          <div class="billing-layout">
+            <div class="space-y-4 min-w-0">
+              <section class="panel p-4 sm:p-5">
+                <div class="flex justify-between items-start mb-4"><div><div class="section-title">Customer details</div><div class="section-caption">Invoice <span id="billNumberLabel"></span></div></div><span class="text-[10px] font-bold text-[#51806a] bg-[#edf4ef] px-2.5 py-1 rounded-full">NEW SALE</span></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div><label class="field-label" for="customerName">Customer name</label><input class="field" id="customerName" placeholder="Walk-in customer" autocomplete="name"></div>
+                  <div><label class="field-label" for="companyName">Company name</label><input class="field" id="companyName" placeholder="Company (optional)"></div>
+                  <div><label class="field-label" for="customerPhone">Phone number</label><input class="field" id="customerPhone" placeholder="03xx xxxxxxx" inputmode="tel"></div>
+                  <div><label class="field-label" for="customerAddress">Address</label><input class="field" id="customerAddress" placeholder="Customer address"></div>
+                </div>
+              </section>
+
+              <section class="panel p-4 sm:p-5">
+                <div class="flex items-center justify-between gap-3 mb-2"><div><div class="section-title">Bill items</div><div class="section-caption">Choose a stocked item or enter a custom product.</div></div><button id="addItemBtn" class="btn btn-soft" type="button"><i class="fa-solid fa-plus"></i><span>Add item</span></button></div>
+                <div class="items-heading grid grid-cols-[minmax(135px,1.5fr)_54px_repeat(4,minmax(72px,1fr))_30px] gap-[7px] px-0 pt-2 text-[9px] font-bold uppercase tracking-wider text-[#86928c]"><span>Item / description</span><span>Qty</span><span>Cost</span><span>Selling</span><span>Amount</span><span>Profit</span><span></span></div>
+                <div id="billItems"></div>
+                <datalist id="productOptions"></datalist>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 pt-4 border-t border-[#edf1ee]">
+                  <div><label class="field-label" for="freightCharge">Freight charges (Rs.)</label><input class="field charge-input" type="number" id="freightCharge" min="0" step="0.01" value="0"></div>
+                  <div><label class="field-label" for="otherCharge">Other charges (Rs.)</label><input class="field charge-input" type="number" id="otherCharge" min="0" step="0.01" value="0"></div>
+                </div>
+                <div class="flex items-center justify-between mt-4 px-1"><span class="text-xs text-[#77857e]">Items subtotal</span><strong id="subtotalText" class="text-sm text-[#26372f]">Rs. 0.00</strong></div>
+                <div class="flex items-center justify-between mt-2 px-1"><span class="text-xs text-[#77857e]">Estimated bill profit</span><strong id="billProfitText" class="text-sm text-[#376a55]">Rs. 0.00</strong></div>
+                <div class="flex items-center justify-between mt-2 px-1"><span class="text-sm font-bold text-[#26372f]">Grand total</span><strong id="grandTotalText" class="text-lg font-bold text-[#1d493b]">Rs. 0.00</strong></div>
+              </section>
+              <section class="panel p-4 sm:p-5">
+                <div class="mb-4"><div class="section-title">Payment &amp; Balance Summary</div><div class="section-caption">Record the payment and any balance due.</div></div>
+                <div class="payment-context">
+                  <div><div class="payment-context-label">Customer</div><div class="payment-context-value" id="paymentCustomerSummary">Walk-in customer</div></div>
+                  <div><div class="payment-context-label">Purchased items</div><div class="payment-context-value" id="paymentItemsSummary">No items added</div></div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div><label class="field-label" for="paymentTotalText">Total bill amount (Rs.)</label><input class="field" id="paymentTotalText" value="0.00" readonly aria-readonly="true"></div>
+                  <div><label class="field-label" for="amountPaid">Amount paid (Rs.)</label><input class="field" id="amountPaid" type="number" min="0" step="0.01" value="0" inputmode="decimal"></div>
+                  <div><label class="field-label" for="remainingBalance">Remaining balance due (Rs.)</label><input class="field" id="remainingBalance" value="0.00" readonly aria-readonly="true"></div>
+                  <div><label class="field-label" for="paymentDate">Date</label><input class="field" id="paymentDate" type="date"></div>
+                  <div class="sm:col-span-2"><label class="field-label" for="paymentNotes">Payment reason / notes</label><textarea class="field" id="paymentNotes" placeholder="Add payment details or notes"></textarea></div>
+                </div>
+              </section>
+              <div class="flex flex-wrap justify-end gap-2">
+                <button id="updateBillBtn" class="btn btn-outline" type="button"><i class="fa-solid fa-rotate"></i>Update Bill</button>
+                <button id="printBillBtn" class="btn btn-outline" type="button"><i class="fa-solid fa-print"></i>Print / Save PDF</button>
+                <button id="downloadBillBtn" class="btn btn-outline download-bill-btn" type="button"><i class="fa-solid fa-download"></i>Download PDF</button>
+                <button id="cancelBillEditBtn" class="btn btn-outline hidden" type="button"><i class="fa-solid fa-xmark"></i>Cancel edit</button>
+                <button id="saveBillBtn" class="btn btn-primary" type="button"><i class="fa-solid fa-floppy-disk"></i>Save Bill</button>
+              </div>
+            </div>
+
+            <aside class="panel p-3 invoice-preview-sticky">
+              <div class="flex items-center justify-between px-1 pb-3"><div><div class="section-title">Invoice preview</div><div class="section-caption">Updates as you edit</div></div><i class="fa-regular fa-eye text-[#779084]"></i></div>
+              <div id="invoicePreview" class="invoice-paper"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="page-inventory" class="page">
+          <div class="mb-5"><h1 class="text-xl font-bold text-[#20342c]">Stock & purchases</h1><p class="text-xs text-[#77857e] mt-1">Record incoming stock and keep an eye on margin.</p></div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+            <div class="stat-card"><div class="flex justify-between"><span class="stat-label">Products in catalogue</span><span class="stat-icon"><i class="fa-solid fa-box"></i></span></div><div class="stat-value" id="statProducts">0</div></div>
+            <div class="stat-card"><div class="flex justify-between"><span class="stat-label">Units in stock</span><span class="stat-icon"><i class="fa-solid fa-cubes-stacked"></i></span></div><div class="stat-value" id="statUnits">0</div></div>
+            <div class="stat-card"><div class="flex justify-between"><span class="stat-label">Estimated stock value</span><span class="stat-icon"><i class="fa-solid fa-coins"></i></span></div><div class="stat-value" id="statValue">Rs. 0</div></div>
+          </div>
+          <section class="panel p-4 sm:p-5 mb-5">
+            <div class="mb-4"><div class="section-title">Record a purchase</div><div class="section-caption">Existing product names add to current stock.</div></div>
+            <form id="purchaseForm" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3 items-end">
+              <div class="xl:col-span-1"><label class="field-label" for="purchaseName">Item name *</label><input class="field" id="purchaseName" required placeholder="Product name"></div>
+              <div class="xl:col-span-1"><label class="field-label" for="purchaseDescription">Description</label><input class="field" id="purchaseDescription" placeholder="Details"></div>
+              <div><label class="field-label" for="purchaseRate">Purchase rate *</label><input class="field" id="purchaseRate" type="number" min="0" step="0.01" required placeholder="0.00"></div>
+              <div><label class="field-label" for="sellingRate">Selling rate *</label><input class="field" id="sellingRate" type="number" min="0" step="0.01" required placeholder="0.00"></div>
+              <div><label class="field-label" for="purchaseQty">Quantity *</label><input class="field" id="purchaseQty" type="number" min="1" step="1" required placeholder="0"></div>
+              <button class="btn btn-primary" type="submit"><i class="fa-solid fa-plus"></i> Add stock</button>
+            </form>
+          </section>
+          <section class="panel overflow-hidden">
+            <div class="flex items-center justify-between p-4 sm:px-5 border-b border-[#edf1ee]"><div><div class="section-title">Inventory</div><div class="section-caption">Current quantities and estimated margins</div></div><span id="stockCount" class="text-[10px] text-[#78877f]"></span></div>
+            <div class="table-wrap"><table><thead><tr><th>Item</th><th>Description</th><th>In stock</th><th>Purchase price</th><th>Selling price</th><th>Per-unit profit</th><th>Margin</th><th>Stock value</th><th>Potential profit</th></tr></thead><tbody id="inventoryBody"></tbody></table></div>
+            <div id="inventoryEmpty" class="empty-state hidden"><i class="fa-solid fa-box-open text-xl mb-2"></i><div>No products yet. Record your first purchase above.</div></div>
+          </section>
+        </section>
+
+        <section id="page-expenses" class="page">
+          <div class="mb-5"><h1 class="text-xl font-bold text-[#20342c]">Expenses & investments</h1><p class="text-xs text-[#77857e] mt-1">Track business spending and capital contributions.</p></div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            <div class="stat-card"><div class="flex justify-between"><span class="stat-label">Total recorded</span><span class="stat-icon"><i class="fa-solid fa-arrow-trend-down"></i></span></div><div class="stat-value" id="expenseTotal">Rs. 0.00</div></div>
+            <div class="stat-card"><div class="flex justify-between"><span class="stat-label">Entries recorded</span><span class="stat-icon"><i class="fa-solid fa-receipt"></i></span></div><div class="stat-value" id="expenseEntries">0</div></div>
+          </div>
+          <section class="panel p-4 sm:p-5 mb-5">
+            <div class="mb-4"><div class="section-title">Add expense or investment</div><div class="section-caption">Record shop costs, materials, labor, or capital added.</div></div>
+            <form id="expenseForm" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[1.4fr_1fr_1fr_1fr_auto] gap-3 items-end">
+              <div><label class="field-label" for="expenseTitle">Expense title / reason *</label><input class="field" id="expenseTitle" required placeholder="Shop rent, transport, investment"></div>
+              <div><label class="field-label" for="expenseCategory">Category *</label><select class="field" id="expenseCategory" required><option value="Shop Rent">Shop Rent</option><option value="Transport">Transport</option><option value="Utilities">Utilities</option><option value="Raw Material">Raw Material</option><option value="Labor">Labor</option><option value="Investment">Investment</option><option value="Other">Other</option></select></div>
+              <div><label class="field-label" for="expenseAmount">Amount (Rs.) *</label><input class="field" id="expenseAmount" type="number" min="0.01" step="0.01" required placeholder="0.00"></div>
+              <div><label class="field-label" for="expenseDate">Date *</label><input class="field" id="expenseDate" type="date" required></div>
+              <button class="btn btn-primary" type="submit"><i class="fa-solid fa-plus"></i>Record</button>
+            </form>
+          </section>
+          <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(270px,.65fr)] gap-5 items-start">
+            <section class="panel overflow-hidden"><div class="p-4 sm:px-5 border-b border-[#edf1ee]"><div class="section-title">Expense ledger</div><div class="section-caption">Recent business outflows and investments</div></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Title / reason</th><th>Category</th><th>Amount</th><th></th></tr></thead><tbody id="expenseBody"></tbody></table></div><div id="expenseEmpty" class="empty-state hidden"><i class="fa-solid fa-wallet text-xl mb-2"></i><div>No expenses recorded yet.</div></div></section>
+            <section class="panel overflow-hidden"><div class="p-4 sm:px-5 border-b border-[#edf1ee]"><div class="section-title">Spending by category</div><div class="section-caption">All recorded expenses and investments</div></div><div id="expenseBreakdown" class="p-4 sm:p-5 space-y-4"></div></section>
+          </div>
+        </section>
+
+        <section id="page-history" class="page">
+          <div class="flex items-end justify-between gap-3 mb-5"><div><h1 class="text-xl font-bold text-[#20342c]">Bill history</h1><p class="text-xs text-[#77857e] mt-1">Saved invoices from this device.</p></div><div class="text-[11px] text-[#718078]" id="historyCount">0 bills</div></div>
+          <section class="panel overflow-hidden"><div class="table-wrap"><table><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Items summary</th><th>Reason / notes</th><th>Total</th><th>Paid</th><th>Balance due</th><th>Profit</th><th>Actions</th></tr></thead><tbody id="historyBody"></tbody></table></div><div id="historyEmpty" class="empty-state hidden"><i class="fa-regular fa-file-lines text-xl mb-2"></i><div>No saved bills yet.</div></div></section>
+        </section>
+
+        <section id="page-credit" class="page">
+          <div class="mb-5"><h1 class="text-xl font-bold text-[#20342c]">Credit / Payment Ledger</h1><p class="text-xs text-[#77857e] mt-1">Outstanding customer balances from saved bills.</p></div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            <div class="stat-card"><div class="flex justify-between"><span class="stat-label">Open invoices</span><span class="stat-icon"><i class="fa-solid fa-file-invoice"></i></span></div><div class="stat-value" id="creditAccountCount">0</div></div>
+            <div class="stat-card"><div class="flex justify-between"><span class="stat-label">Total outstanding</span><span class="stat-icon"><i class="fa-solid fa-coins"></i></span></div><div class="stat-value" id="creditOutstandingTotal">Rs. 0.00</div></div>
+          </div>
+          <section class="panel overflow-hidden">
+            <div class="p-4 sm:px-5 border-b border-[#edf1ee]"><div class="section-title">Open balances</div><div class="section-caption">Bills appear here automatically while a balance remains due.</div></div>
+            <div class="table-wrap"><table><thead><tr><th>Invoice date</th><th>Last payment</th><th>Invoice</th><th>Customer</th><th>Items</th><th>Total amount</th><th>Paid</th><th>Remaining balance</th><th>Reason / notes</th><th>Payment activity</th><th>Action</th></tr></thead><tbody id="creditLedgerBody"></tbody></table></div>
+            <div id="creditLedgerEmpty" class="empty-state hidden"><i class="fa-solid fa-circle-check text-xl mb-2"></i><div>No customer balances are currently due.</div></div>
+          </section>
+        </section>
+
+        <section id="page-financials" class="page">
+          <div class="flex flex-wrap items-end justify-between gap-3 mb-5"><div><h1 class="text-xl font-bold text-[#20342c]">Admin / Profit &amp; Financial Summary</h1><p class="text-xs text-[#77857e] mt-1">Performance across saved invoices. Profit is invoice total less original item cost.</p></div><div class="text-[11px] text-[#718078]" id="financialOrderCount">0 orders</div></div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+            <div class="stat-card"><div class="flex justify-between"><span class="stat-label">Total cost</span><span class="stat-icon"><i class="fa-solid fa-boxes-stacked"></i></span></div><div class="stat-value" id="financialTotalCost">Rs. 0.00</div></div>
+            <div class="stat-card"><div class="flex justify-between"><span class="stat-label">Total revenue</span><span class="stat-icon"><i class="fa-solid fa-arrow-trend-up"></i></span></div><div class="stat-value" id="financialTotalRevenue">Rs. 0.00</div></div>
+            <div class="stat-card"><div class="flex justify-between"><span class="stat-label">Total profit</span><span class="stat-icon"><i class="fa-solid fa-coins"></i></span></div><div class="stat-value" id="financialTotalProfit">Rs. 0.00</div></div>
+          </div>
+          <section class="panel overflow-hidden">
+            <div class="p-4 sm:px-5 border-b border-[#edf1ee]"><div class="section-title">Order-by-order profit</div><div class="section-caption">Original item costs and invoice totals for each saved order</div></div>
+            <div class="table-wrap"><table><thead><tr><th>Order ID</th><th>Date</th><th>Customer</th><th>Original cost</th><th>Selling price / total</th><th>Net profit</th></tr></thead><tbody id="financialOrdersBody"></tbody></table></div>
+            <div id="financialOrdersEmpty" class="empty-state hidden"><i class="fa-solid fa-chart-column text-xl mb-2"></i><div>Saved orders will appear here.</div></div>
+          </section>
+        </section>
+      </div>
+    </main>
+  </div>
+  <div id="sidebarBackdrop" aria-hidden="true"></div>
+  <div id="adminLoginModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="adminLoginTitle"><div class="modal max-w-md"><div class="flex items-center justify-between mb-4"><div><div id="adminLoginTitle" class="section-title">Admin sign in</div><div class="section-caption">Enter administrator credentials to continue.</div></div><button id="closeAdminLogin" class="icon-button" type="button" aria-label="Close admin sign in"><i class="fa-solid fa-xmark"></i></button></div><form id="adminLoginForm" class="space-y-3"><div><label class="field-label" for="adminEmail">Email</label><input class="field" id="adminEmail" type="email" autocomplete="username" required></div><div><label class="field-label" for="adminPassword">Password</label><input class="field" id="adminPassword" type="password" autocomplete="current-password" required></div><p id="adminLoginError" class="text-xs font-semibold text-[#a4423b]" role="alert" aria-live="assertive"></p><div class="flex justify-end gap-2 pt-1"><button id="cancelAdminLogin" class="btn btn-outline" type="button">Cancel</button><button class="btn btn-primary" type="submit"><i class="fa-solid fa-lock-open"></i>Sign in</button></div></form></div></div>
+  <div id="printInvoice" aria-hidden="true"></div>
+  <div id="billModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal"><div class="flex items-center justify-between mb-3"><div><div id="modalTitle" class="section-title">Saved invoice</div><div class="section-caption">Read-only saved bill</div></div><button id="closeModal" class="icon-button" aria-label="Close invoice"><i class="fa-solid fa-xmark"></i></button></div><div id="modalInvoice"></div><div class="flex justify-end gap-2 mt-3"><button id="modalPrintBtn" class="btn btn-outline"><i class="fa-solid fa-print"></i>Print / Save PDF</button><button id="modalCloseBtn" class="btn btn-primary">Done</button></div></div></div>
+  <div id="ledgerPaymentModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="ledgerPaymentTitle"><div class="modal"><div class="flex items-center justify-between mb-3"><div><div id="ledgerPaymentTitle" class="section-title">Record customer payment</div><div class="section-caption" id="ledgerPaymentBillLabel"></div></div><button id="closeLedgerPayment" class="icon-button" type="button" aria-label="Close payment form"><i class="fa-solid fa-xmark"></i></button></div><form id="ledgerPaymentForm"><div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="field-label" for="ledgerPaymentAmount">Payment amount (Rs.) *</label><input class="field" id="ledgerPaymentAmount" type="number" min="0.01" step="0.01" required inputmode="decimal"></div><div><label class="field-label" for="ledgerPaymentDate">Payment date *</label><input class="field" id="ledgerPaymentDate" type="date" required></div><div class="sm:col-span-2"><label class="field-label" for="ledgerPaymentNotes">Reason / notes</label><textarea class="field" id="ledgerPaymentNotes" placeholder="Installment, cash received, or other details"></textarea></div></div><div class="flex justify-end gap-2 mt-4"><button id="cancelLedgerPayment" class="btn btn-outline" type="button">Cancel</button><button class="btn btn-primary" type="submit"><i class="fa-solid fa-check"></i>Save payment</button></div></form></div></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      'use strict';
+      const STORAGE = { legacyProducts: 'qadeerTraders.products.v1', legacyBills: 'qadeerTraders.bills.v1', legacyExpenses: 'qadeerTraders.expenses.v1', migration: 'qadeerTraders.supabaseMigration.v1', expenseMigration: 'qadeerTraders.supabaseExpenseMigration.v1' };
+      const supabase = window.supabase.createClient(
+        'https://wpkhcobomcegfdsreoaj.supabase.co',
+        'sb_publishable_9wKDR3aCwphONF4BxqspgA_pLgsXcUg'
+      );
+      const BUSINESS = { name: 'Qadeer Trader', address: 'Building No. 216, Askari Bank, 1st Floor, FF, Phase 4, DHA Lahore', phone: '03054003812' };
+      const ADMIN_CREDENTIALS = { email: 'ahsannaqvi1214@gmail.com', password: '@hsan1122' };
+      const ADMIN_PAGES = new Set(['inventory', 'expenses', 'history', 'credit', 'financials']);
+      let products = [];
+      let bills = [];
+      let expenses = [];
+      let ledgerEntries = [];
+      let billCounter = 1;
+      let businessDataReady = false;
+      let activeModalBill = null;
+      let activeLedgerBillNumber = null;
+      let editingBillNumber = null;
+      let isAdminAuthenticated = false;
+      let toastTimer;
+      const $ = (selector, root = document) => root.querySelector(selector);
+      const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+      const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+      const money = value => `Rs. ${Number(value || 0).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      const today = () => new Date().toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' });
+      const formatDate = value => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))) return value || today();
+        const date = new Date(`${value}T12:00:00`);
+        return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' });
+      };
+      const localDateInputValue = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const newId = () => globalThis.crypto?.randomUUID?.() || 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, char => {
+        const random = Math.floor(Math.random() * 16);
+        return (char === 'x' ? random : (random & 0x3) | 0x8).toString(16);
+      });
+      async function migrateLegacyData() {
+        const readLegacyArray = key => {
+          const stored = localStorage.getItem(key);
+          if (!stored) return [];
+          const value = JSON.parse(stored);
+          if (!Array.isArray(value)) throw new Error(`Legacy browser data at ${key} is not a list.`);
+          return value;
+        };
+        if (localStorage.getItem(STORAGE.migration) !== 'done') {
+          const [legacyProducts, legacyBills] = [readLegacyArray(STORAGE.legacyProducts), readLegacyArray(STORAGE.legacyBills)];
+          const [{ data: currentProducts, error: productQueryError }, { data: currentBills, error: billQueryError }] = await Promise.all([
+            supabase.from('inventory').select('id').limit(1),
+            supabase.from('bills').select('id,bill_number').limit(1)
+          ]);
+          if (productQueryError) throw productQueryError;
+          if (billQueryError) throw billQueryError;
+          if (!currentProducts.length && legacyProducts.length) {
+            const rows = legacyProducts.map(product => ({
+              id: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(product.id) ? product.id : newId(),
+              product_name: String(product.name || '').trim(),
+              description: String(product.description || ''),
+              stock: Number(product.stock),
+              purchase_rate: Number(product.purchaseRate),
+              price: Number(product.sellingRate)
+            }));
+            const { error } = await supabase.from('inventory').insert(rows);
+            if (error) throw error;
+          }
+          if (!currentBills.length && legacyBills.length) {
+            const rows = legacyBills.map(bill => {
+              const id = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(bill.id) ? bill.id : newId();
+              return {
+                id,
+                bill_number: String(bill.number || '').trim(),
+                bill_data: { ...bill, id, number: String(bill.number || '').trim(), payments: [] },
+                customer: bill.customer || {},
+                items: bill.items || [],
+                amount: Number(bill.total || 0),
+                paid_amount: Number(bill.amountPaid || 0),
+                balance: Number(bill.balanceDue ?? Math.max(0, Number(bill.total || 0) - Number(bill.amountPaid || 0))),
+                balance_due: Number(bill.balanceDue ?? Math.max(0, Number(bill.total || 0) - Number(bill.amountPaid || 0))),
+                subtotal: Number(bill.subtotal || 0),
+                freight: Number(bill.freight || 0),
+                other: Number(bill.other || 0),
+                profit: Number(bill.profit || 0),
+                notes: String(bill.paymentNotes || ''),
+                type: 'bill',
+                created_at: bill.createdAt || new Date().toISOString()
+              };
+            });
+            const { error } = await supabase.from('bills').insert(rows);
+            if (error) throw error;
+          }
+          if (legacyBills.length) {
+            const { data: importedBills, error } = await supabase.from('bills').select('id,bill_number');
+            if (error) throw error;
+            const billIds = new Map(importedBills.map(bill => [bill.bill_number, bill.id]));
+            const paymentRows = legacyBills.flatMap(bill => {
+              const billNumber = String(bill.number || '').trim();
+              const billId = billIds.get(billNumber);
+              if (!billId) return [];
+              return (Array.isArray(bill.payments) ? bill.payments : []).map((payment, index) => ({
+                bill_id: billId,
+                payment_number: index + 1,
+                amount: Number(payment.amount),
+                paid_amount: Number(payment.amount),
+                date: payment.date || bill.paymentDate || bill.date,
+                payment_date: payment.date || bill.paymentDate || bill.date,
+                notes: String(payment.notes || '')
+              }));
+            });
+            if (paymentRows.length) {
+              const { error: paymentError } = await supabase.from('ledger').upsert(paymentRows, {
+                onConflict: 'bill_id,payment_number',
+                ignoreDuplicates: true
+              });
+              if (paymentError) throw paymentError;
+            }
+          }
+          localStorage.setItem(STORAGE.migration, 'done');
+        }
+        if (localStorage.getItem(STORAGE.expenseMigration) !== 'done') {
+          const legacyExpenses = readLegacyArray(STORAGE.legacyExpenses);
+          if (legacyExpenses.length) {
+            const rows = legacyExpenses.map(expense => ({
+              id: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(expense.id) ? expense.id : newId(),
+              title: String(expense.title || '').trim(),
+              category: String(expense.category || 'Other'),
+              amount: Number(expense.amount),
+              expense_date: expense.date,
+              created_at: expense.createdAt || new Date().toISOString()
+            }));
+            const { error } = await supabase.from('expenses').upsert(rows, { onConflict: 'id', ignoreDuplicates: true });
+            if (error) throw error;
+          }
+          localStorage.setItem(STORAGE.expenseMigration, 'done');
+        }
+      }
+      const billNo = () => {
+        let number = `QT-${String(billCounter).padStart(5, '0')}`;
+        while (bills.some(bill => bill.number === number)) {
+          billCounter += 1;
+          number = `QT-${String(billCounter).padStart(5, '0')}`;
+        }
+        return number;
+      };
+      const showToast = message => { const node = $('#toast'); node.textContent = message; node.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => node.classList.remove('show'), 2600); };
+      const requireReadyData = () => {
+        if (businessDataReady) return true;
+        showToast('Business data is not loaded. Check your Supabase connection and try again.');
+        return false;
+      };
+      async function loadInventory() {
+        const { data, error } = await supabase.from('inventory').select('*').order('product_name');
+        if (error) throw error;
+        products = data.map(row => ({
+          id: row.id,
+          name: row.product_name,
+          description: row.description || '',
+          stock: Number(row.stock),
+          purchaseRate: Number(row.purchase_rate),
+          sellingRate: Number(row.price)
+        }));
+      }
+      async function loadBills() {
+        const { data, error } = await supabase.from('bills').select('id,bill_number,bill_data,created_at').order('created_at', { ascending: false });
+        if (error) throw error;
+        bills = data.map(row => ({
+          ...row.bill_data,
+          id: row.id,
+          number: row.bill_number,
+          createdAt: row.created_at
+        }));
+        billCounter = bills.reduce((next, bill) => {
+          const match = /^QT-(\d+)$/.exec(bill.number || '');
+          return match ? Math.max(next, Number(match[1]) + 1) : next;
+        }, 1);
+      }
+      async function loadLedger() {
+        const { data, error } = await supabase.from('ledger').select('id,bill_id,payment_number,amount,payment_date,notes,created_at').order('created_at');
+        if (error) throw error;
+        ledgerEntries = data.map(row => ({
+          id: row.id,
+          billId: row.bill_id,
+          paymentNumber: row.payment_number,
+          amount: Number(row.amount),
+          date: row.payment_date,
+          notes: row.notes || '',
+          createdAt: row.created_at
+        }));
+      }
+      function applyLedgerPayments() {
+        const paymentsByBill = new Map();
+        for (const payment of ledgerEntries) {
+          const payments = paymentsByBill.get(payment.billId) || [];
+          payments.push(payment);
+          paymentsByBill.set(payment.billId, payments);
+        }
+        bills.forEach(bill => { bill.payments = paymentsByBill.get(bill.id) || []; });
+      }
+      async function loadExpenses() {
+        const { data, error } = await supabase.from('expenses').select('id,title,category,amount,expense_date,created_at').order('expense_date', { ascending: false }).order('created_at', { ascending: false });
+        if (error) throw error;
+        expenses = data.map(row => ({
+          id: row.id,
+          title: row.title,
+          category: row.category,
+          amount: Number(row.amount),
+          date: row.expense_date,
+          createdAt: row.created_at
+        }));
+      }
+      async function loadBusinessData() {
+        await migrateLegacyData();
+        const [inventoryResult, billsResult, ledgerResult, expensesResult] = await Promise.allSettled([loadInventory(), loadBills(), loadLedger(), loadExpenses()]);
+        const failure = [inventoryResult, billsResult, ledgerResult, expensesResult].find(result => result.status === 'rejected');
+        if (failure) throw failure.reason;
+        applyLedgerPayments();
+        businessDataReady = true;
+        $('#billNumberLabel').textContent = billNo();
+        updateProductOptions();
+        renderInventory();
+        renderHistory();
+        renderExpenses();
+        addBillRow();
+        supabase.channel('qadeer-traders-pos')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'bills' }, refreshRemoteData)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, refreshRemoteData)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'ledger' }, refreshRemoteData)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, refreshRemoteData)
+          .subscribe((status, error) => {
+            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+              showToast(`Live sync unavailable: ${error?.message || status}.`);
+            }
+          });
+      }
+      async function refreshRemoteData() {
+        try {
+          await Promise.all([loadInventory(), loadBills(), loadLedger(), loadExpenses()]);
+          applyLedgerPayments();
+          renderInventory();
+          renderHistory();
+          renderExpenses();
+        } catch (error) {
+          showToast(`Could not sync updated business data: ${error.message || 'Supabase request failed.'}`);
+        }
+      }
+
+      function updateProductOptions() {
+        $('#productOptions').innerHTML = products.map(product => `<option value="${escapeHtml(product.name)}">${product.stock} in stock</option>`).join('');
+      }
+
+      function addBillRow(item = {}) {
+        const row = document.createElement('div');
+        row.className = 'product-row';
+        row.innerHTML = `<div class="item-details"><label class="field-label">Item name</label><input class="field item-name" list="productOptions" placeholder="Item name" value="${escapeHtml(item.name || '')}"></div><div><label class="field-label">Qty</label><input class="field item-qty" type="number" min="0.01" step="any" value="${item.quantity ?? 1}"></div><div><label class="field-label">Cost (Rs.)</label><input class="field item-cost" type="number" min="0" step="0.01" value="${item.purchaseRate ?? ''}" placeholder="0.00"></div><div><label class="field-label">Selling (Rs.)</label><input class="field item-price" type="number" min="0" step="0.01" value="${item.price ?? ''}" placeholder="0.00"></div><div><label class="field-label">Amount</label><span class="line-value line-amount">${money(item.quantity * item.price)}</span></div><div><label class="field-label">Profit</label><span class="line-value line-profit">${money(item.quantity * (item.price - item.purchaseRate))}</span></div><button class="icon-button remove-item" type="button" aria-label="Remove item"><i class="fa-solid fa-xmark"></i></button>`;
+        $('#billItems').append(row);
+        $('.item-name', row).addEventListener('input', recalculate);
+        $('.item-name', row).addEventListener('change', () => fillProductDetails(row));
+        $('.item-name', row).addEventListener('blur', () => fillProductDetails(row));
+        $$('.item-qty, .item-cost, .item-price', row).forEach(input => input.addEventListener('input', recalculate));
+        $('.remove-item', row).addEventListener('click', () => { row.remove(); if (!$$('.product-row').length) addBillRow(); recalculate(); });
+        recalculate();
+      }
+
+      function fillProductDetails(row) {
+        const input = $('.item-name', row).value.trim().toLocaleLowerCase();
+        const product = products.find(entry => entry.name.trim().toLocaleLowerCase() === input);
+        if (!product) return;
+        $('.item-cost', row).value = product.purchaseRate;
+        $('.item-price', row).value = product.sellingRate;
+        recalculate();
+      }
+
+      function collectDraft() {
+        const items = $$('.product-row').map(row => ({
+          name: $('.item-name', row).value.trim(),
+          quantity: Number($('.item-qty', row).value), purchaseRate: Number($('.item-cost', row).value), price: Number($('.item-price', row).value),
+          amount: (Number($('.item-qty', row).value) || 0) * (Number($('.item-price', row).value) || 0),
+          profit: (Number($('.item-qty', row).value) || 0) * ((Number($('.item-price', row).value) || 0) - (Number($('.item-cost', row).value) || 0))
+        })).filter(item => item.name && item.quantity > 0 && item.price >= 0);
+        const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+        const profit = items.reduce((sum, item) => sum + item.profit, 0);
+        const freight = Math.max(0, Number($('#freightCharge').value) || 0);
+        const other = Math.max(0, Number($('#otherCharge').value) || 0);
+        const total = subtotal + freight + other;
+        const amountPaid = Math.max(0, Number($('#amountPaid').value) || 0);
+        const paymentDate = $('#paymentDate').value || localDateInputValue();
+        return { number: editingBillNumber || billNo(), date: formatDate(paymentDate), paymentDate, customer: { name: $('#customerName').value.trim(), company: $('#companyName').value.trim(), phone: $('#customerPhone').value.trim(), address: $('#customerAddress').value.trim() }, items, freight, other, subtotal, profit, total, amountPaid, balanceDue: Math.max(0, total - amountPaid), paymentNotes: $('#paymentNotes').value.trim() };
+      }
+
+      function invoiceMarkup(bill) {
+        const customer = bill.customer || {};
+        const rows = (bill.items || []).map(item => `<tr>
+          <td><div class="receipt-item-name">${escapeHtml(item.name)}</div></td>
+          <td class="receipt-numeric">${Number(item.quantity)}</td>
+          <td class="receipt-numeric">${money(item.quantity * item.price)}</td>
+        </tr>`).join('');
+        return `<article class="receipt">
+          <header class="receipt-header">
+            <div class="receipt-business-name">${BUSINESS.name}</div>
+            <div class="receipt-business-details">${BUSINESS.address}<br>Phone: ${BUSINESS.phone}</div>
+          </header>
+          <section class="receipt-meta" aria-label="Invoice details">
+            <div class="receipt-meta-row"><span class="receipt-label">Invoice</span><strong>${escapeHtml(bill.number)}</strong></div>
+            <div class="receipt-meta-row"><span class="receipt-label">Date</span><span>${escapeHtml(bill.date)}</span></div>
+          </section>
+          <section class="receipt-customer" aria-label="Customer details">
+            <div class="receipt-customer-row"><span class="receipt-label">Customer</span><strong>${escapeHtml(customer.name || 'Walk-in customer')}</strong></div>
+            <div class="receipt-customer-row"><span class="receipt-label">Company</span><span>${escapeHtml(customer.company || '-')}</span></div>
+            <div class="receipt-customer-row"><span class="receipt-label">Phone</span><span>${escapeHtml(customer.phone || '-')}</span></div>
+            <div class="receipt-customer-row"><span class="receipt-label">Address</span><span>${escapeHtml(customer.address || '-')}</span></div>
+          </section>
+          <table aria-label="Invoice items">
+            <thead><tr><th>Item</th><th class="receipt-numeric">Qty</th><th class="receipt-numeric">Amount</th></tr></thead>
+            <tbody>${rows || '<tr><td class="receipt-empty" colspan="3">No items added</td></tr>'}</tbody>
+          </table>
+          <section class="receipt-totals" aria-label="Invoice totals">
+            <div class="receipt-total-row"><span>Subtotal</span><span class="receipt-total-value">${money(bill.subtotal)}</span></div>
+            <div class="receipt-total-row"><span>Freight</span><span class="receipt-total-value">${money(bill.freight)}</span></div>
+            <div class="receipt-total-row"><span>Other charges</span><span class="receipt-total-value">${money(bill.other)}</span></div>
+            <div class="receipt-total-row receipt-grand-total"><span>Total Amount</span><span class="receipt-total-value">${money(bill.total)}</span></div>
+            <div class="receipt-total-row"><span>Paid Amount</span><span class="receipt-total-value">${money(bill.amountPaid ?? 0)}</span></div>
+            <div class="receipt-total-row receipt-balance-due"><span>Remaining Balance (Due)</span><span class="receipt-total-value">${money(bill.balanceDue ?? Math.max(0, Number(bill.total || 0) - Number(bill.amountPaid || 0)))}</span></div>
+            <div class="receipt-notes"><span class="receipt-label">Reason / Notes / Date</span><br>${escapeHtml(bill.paymentNotes || '-')}<br>${escapeHtml(formatDate(bill.paymentDate || bill.date))}</div>
+          </section>
+          <footer class="receipt-footer">
+            <div>Thank you for choosing Qadeer Traders! We appreciate your trust.</div>
+            <div>Phone: 03054003812 | Address: DHA Lahore.</div>
+          </footer>
+        </article>`;
+      }
+
+      function renderPreview() {
+        const draft = collectDraft();
+        $('#invoicePreview').innerHTML = invoiceMarkup(draft);
+        $('#printInvoice').innerHTML = invoiceMarkup(draft);
+        $('#paymentCustomerSummary').textContent = draft.customer.name || 'Walk-in customer';
+        $('#paymentItemsSummary').textContent = draft.items.length ? draft.items.map(item => `${item.name} × ${item.quantity}`).join(', ') : 'No items added';
+      }
+
+      function recalculate() {
+        const draft = collectDraft();
+        $$('.product-row').forEach(row => {
+          const quantity = Number($('.item-qty', row).value) || 0;
+          const purchaseRate = Number($('.item-cost', row).value) || 0;
+          const sellingRate = Number($('.item-price', row).value) || 0;
+          $('.line-amount', row).textContent = money(quantity * sellingRate);
+          $('.line-profit', row).textContent = money(quantity * (sellingRate - purchaseRate));
+        });
+        $('#subtotalText').textContent = money(draft.subtotal);
+        $('#billProfitText').textContent = money(draft.profit);
+        $('#grandTotalText').textContent = money(draft.total);
+        $('#paymentTotalText').value = draft.total.toFixed(2);
+        $('#remainingBalance').value = draft.balanceDue.toFixed(2);
+        renderPreview();
+      }
+
+      function renderInventory() {
+        updateProductOptions();
+        const body = $('#inventoryBody');
+        body.innerHTML = products.map(product => {
+          const value = product.stock * product.purchaseRate;
+          const unitProfit = product.sellingRate - product.purchaseRate;
+          const margin = product.sellingRate > 0 ? unitProfit / product.sellingRate * 100 : 0;
+          const potentialProfit = product.stock * unitProfit;
+          const state = product.stock <= 0 ? 'pill-red' : product.stock <= 5 ? 'pill-amber' : 'pill-green';
+          return `<tr><td class="font-bold text-[#2a3932]">${escapeHtml(product.name)}</td><td class="text-[#6f7d75]">${escapeHtml(product.description || '—')}</td><td><span class="pill ${state}">${product.stock}</span></td><td>${money(product.purchaseRate)}</td><td>${money(product.sellingRate)}</td><td class="font-semibold ${unitProfit < 0 ? 'text-[#a4423b]' : 'text-[#36704f]'}">${money(unitProfit)}</td><td class="${margin < 0 ? 'text-[#a4423b]' : 'text-[#36704f]'}">${margin.toFixed(1)}%</td><td>${money(value)}</td><td class="${potentialProfit < 0 ? 'text-[#a4423b]' : 'text-[#36704f]'}">${money(potentialProfit)}</td></tr>`;
+        }).join('');
+        labelResponsiveTables();
+        $('#inventoryEmpty').classList.toggle('hidden', products.length > 0);
+        $('#stockCount').textContent = `${products.length} ${products.length === 1 ? 'product' : 'products'}`;
+        $('#statProducts').textContent = products.length.toLocaleString('en-PK');
+        $('#statUnits').textContent = products.reduce((sum, item) => sum + Number(item.stock || 0), 0).toLocaleString('en-PK');
+        $('#statValue').textContent = `Rs. ${products.reduce((sum, item) => sum + item.stock * item.purchaseRate, 0).toLocaleString('en-PK', { maximumFractionDigits: 0 })}`;
+      }
+
+      function renderHistory() {
+        const body = $('#historyBody');
+        body.innerHTML = bills.map((bill, index) => {
+          const itemsSummary = (bill.items || []).map(item => `${item.quantity} × ${item.name}`).join(', ') || '-';
+          const balanceDue = bill.balanceDue ?? Math.max(0, Number(bill.total || 0) - Number(bill.amountPaid || 0));
+          return `<tr><td class="font-bold text-[#315b49]">${escapeHtml(bill.number)}</td><td class="whitespace-nowrap">${escapeHtml(bill.date)}</td><td><div class="font-semibold">${escapeHtml(bill.customer?.name || 'Walk-in customer')}</div>${bill.customer?.company ? `<div class="text-[10px] text-[#829088]">${escapeHtml(bill.customer.company)}</div>` : ''}</td><td>${escapeHtml(itemsSummary)}</td><td>${escapeHtml(bill.paymentNotes || '-')}</td><td class="font-bold whitespace-nowrap">${money(bill.total)}</td><td class="whitespace-nowrap">${money(bill.amountPaid ?? 0)}</td><td class="font-semibold whitespace-nowrap">${money(balanceDue)}</td><td class="font-semibold whitespace-nowrap text-[#376a55]">${money(bill.profit ?? 0)}</td><td><div class="flex gap-1.5"><button class="btn btn-soft !min-h-[30px] !px-2.5" data-view-bill="${index}" title="View invoice"><i class="fa-regular fa-eye"></i><span class="hide-mobile">View</span></button><button class="btn btn-outline !min-h-[30px] !px-2.5" data-edit-bill="${index}" title="Edit saved bill"><i class="fa-solid fa-pen"></i><span class="hide-mobile">Edit</span></button><button class="icon-button" data-delete-bill="${index}" title="Delete saved record" aria-label="Delete ${escapeHtml(bill.number)}"><i class="fa-regular fa-trash-can"></i></button></div></td></tr>`;
+        }).join('');
+        labelResponsiveTables();
+        $('#historyEmpty').classList.toggle('hidden', bills.length > 0);
+        $('#historyCount').textContent = `${bills.length} ${bills.length === 1 ? 'bill' : 'bills'}`;
+        $$('[data-view-bill]').forEach(button => button.addEventListener('click', () => openBill(Number(button.dataset.viewBill))));
+        $$('[data-edit-bill]').forEach(button => button.addEventListener('click', () => editBill(Number(button.dataset.editBill))));
+        $$('[data-delete-bill]').forEach(button => button.addEventListener('click', () => deleteBill(Number(button.dataset.deleteBill))));
+        renderCreditLedger();
+        renderFinancialSummary();
+      }
+
+      function renderFinancialSummary() {
+        const orders = bills.map(bill => {
+          const cost = (bill.items || []).reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.purchaseRate || 0), 0);
+          const revenue = Number(bill.total || 0);
+          return { bill, cost, revenue, profit: revenue - cost };
+        });
+        const totals = orders.reduce((summary, order) => ({
+          cost: summary.cost + order.cost,
+          revenue: summary.revenue + order.revenue,
+          profit: summary.profit + order.profit
+        }), { cost: 0, revenue: 0, profit: 0 });
+        $('#financialTotalCost').textContent = money(totals.cost);
+        $('#financialTotalRevenue').textContent = money(totals.revenue);
+        $('#financialTotalProfit').textContent = money(totals.profit);
+        $('#financialOrderCount').textContent = `${orders.length} ${orders.length === 1 ? 'order' : 'orders'}`;
+        $('#financialOrdersBody').innerHTML = orders.map(({ bill, cost, revenue, profit }) => `<tr><td class="font-bold text-[#315b49]">${escapeHtml(bill.number)}</td><td class="whitespace-nowrap">${escapeHtml(bill.date)}</td><td class="font-semibold">${escapeHtml(bill.customer?.name || 'Walk-in customer')}</td><td class="whitespace-nowrap">${money(cost)}</td><td class="font-bold whitespace-nowrap">${money(revenue)}</td><td class="font-bold whitespace-nowrap ${profit < 0 ? 'text-[#a4423b]' : 'text-[#176741]'}">${money(profit)}</td></tr>`).join('');
+        labelResponsiveTables();
+        $('#financialOrdersEmpty').classList.toggle('hidden', orders.length > 0);
+      }
+
+      function billBalanceDue(bill) {
+        return Math.max(0, Number(bill.total || 0) - Number(bill.amountPaid || 0));
+      }
+
+      function renderCreditLedger() {
+        const openBills = bills.map((bill, index) => ({ bill, index, balanceDue: billBalanceDue(bill) })).filter(entry => entry.balanceDue > 0);
+        const outstandingTotal = openBills.reduce((sum, entry) => sum + entry.balanceDue, 0);
+        $('#creditAccountCount').textContent = openBills.length.toLocaleString('en-PK');
+        $('#creditOutstandingTotal').textContent = money(outstandingTotal);
+        $('#creditLedgerBody').innerHTML = openBills.map(({ bill, index, balanceDue }) => {
+          const itemsSummary = (bill.items || []).map(item => `${item.quantity} × ${item.name}`).join(', ') || '-';
+          const payments = Array.isArray(bill.payments) ? bill.payments : [];
+          const paymentActivity = payments.length ? `<details><summary class="cursor-pointer whitespace-nowrap font-semibold text-[#126344]">${payments.length} payment${payments.length === 1 ? '' : 's'}</summary><div class="mt-1 min-w-[180px] space-y-1">${payments.map(payment => `<div class="text-[11px]">${escapeHtml(formatDate(payment.date))} · ${money(payment.amount)}${payment.notes ? `<div class="text-[#718078]">${escapeHtml(payment.notes)}</div>` : ''}</div>`).join('')}</div></details>` : '<span class="text-[#84918b]">No payments recorded</span>';
+          return `<tr><td class="whitespace-nowrap">${escapeHtml(bill.date)}</td><td class="whitespace-nowrap">${escapeHtml(formatDate(bill.paymentDate || bill.date))}</td><td class="font-bold text-[#315b49]">${escapeHtml(bill.number)}</td><td class="font-semibold">${escapeHtml(bill.customer?.name || 'Walk-in customer')}</td><td>${escapeHtml(itemsSummary)}</td><td class="whitespace-nowrap">${money(bill.total)}</td><td class="whitespace-nowrap">${money(bill.amountPaid ?? 0)}</td><td class="font-bold whitespace-nowrap text-[#9a6b24]">${money(balanceDue)}</td><td>${escapeHtml(bill.paymentNotes || '-')}</td><td>${paymentActivity}</td><td><button class="btn btn-soft !min-h-[30px] !px-2.5 whitespace-nowrap" type="button" data-record-ledger-payment="${index}" title="Record installment payment"><i class="fa-solid fa-plus"></i><span>Record payment</span></button></td></tr>`;
+        }).join('');
+        labelResponsiveTables();
+        $('#creditLedgerEmpty').classList.toggle('hidden', openBills.length > 0);
+        $$('[data-record-ledger-payment]').forEach(button => button.addEventListener('click', () => openLedgerPayment(Number(button.dataset.recordLedgerPayment))));
+      }
+
+      function renderExpenses() {
+        const totals = expenses.reduce((summary, expense) => {
+          summary[expense.category] = (summary[expense.category] || 0) + Number(expense.amount || 0);
+          return summary;
+        }, {});
+        const total = expenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+        $('#expenseTotal').textContent = money(total);
+        $('#expenseEntries').textContent = expenses.length.toLocaleString('en-PK');
+        $('#expenseBody').innerHTML = expenses.map((expense, index) => {
+          const date = new Date(`${expense.date}T12:00:00`);
+          const displayDate = Number.isNaN(date.getTime()) ? escapeHtml(expense.date) : date.toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' });
+          return `<tr><td class="whitespace-nowrap">${displayDate}</td><td class="font-semibold">${escapeHtml(expense.title)}</td><td><span class="pill pill-amber">${escapeHtml(expense.category)}</span></td><td class="font-bold whitespace-nowrap">${money(expense.amount)}</td><td><button class="icon-button" type="button" data-delete-expense="${index}" title="Delete expense" aria-label="Delete ${escapeHtml(expense.title)}"><i class="fa-regular fa-trash-can"></i></button></td></tr>`;
+        }).join('');
+        $('#expenseEmpty').classList.toggle('hidden', expenses.length > 0);
+        const categories = Object.entries(totals).sort((first, second) => second[1] - first[1]);
+        $('#expenseBreakdown').innerHTML = categories.length ? categories.map(([category, amount]) => {
+          const percent = total ? amount / total * 100 : 0;
+          return `<div><div class="flex items-center justify-between gap-2 text-xs mb-2"><span class="font-semibold text-[#41534a]">${escapeHtml(category)}</span><span class="font-bold text-[#26372f] whitespace-nowrap">${money(amount)}</span></div><div class="h-1.5 rounded-full bg-[#edf1ee] overflow-hidden"><div class="h-full rounded-full bg-[#4d8069]" style="width:${percent.toFixed(1)}%"></div></div><div class="text-right text-[9px] text-[#84918b] mt-1">${percent.toFixed(1)}%</div></div>`;
+        }).join('') : '<div class="empty-state !p-4">Category totals will appear here.</div>';
+        labelResponsiveTables();
+        $$('[data-delete-expense]').forEach(button => button.addEventListener('click', () => {
+          const expense = expenses[Number(button.dataset.deleteExpense)];
+          if (!expense || !window.confirm(`Delete expense "${expense.title}"?`)) return;
+          deleteExpense(expense);
+        }));
+      }
+
+      async function deleteExpense(expense) {
+        if (!requireReadyData()) return;
+        try {
+          const { error } = await supabase.from('expenses').delete().eq('id', expense.id);
+          if (error) throw error;
+          businessDataReady = false;
+          await loadExpenses();
+          businessDataReady = true;
+          renderExpenses();
+          showToast('Expense deleted.');
+        } catch (error) {
+          showToast(`Could not delete expense: ${error.message || 'Supabase request failed.'}`);
+        }
+      }
+
+      function switchPage(name) {
+        if (ADMIN_PAGES.has(name) && !isAdminAuthenticated) {
+          openAdminLogin();
+          return;
+        }
+        $$('.page').forEach(page => page.classList.toggle('active', page.id === `page-${name}`));
+        $$('.nav-link').forEach(link => link.classList.toggle('active', link.dataset.page === name));
+        const copy = { billing: ['Create a bill', 'Prepare a customer invoice'], inventory: ['Stock & purchases', 'Manage products and incoming stock'], expenses: ['Expenses & investments', 'Track business outflows by category'], history: ['Bill history', 'Review saved invoices'], credit: ['Credit / Payment Ledger', 'Track outstanding customer balances'], financials: ['Admin / Profit Summary', 'Review revenue, cost, and order profit'] }[name];
+        $('#topTitle').textContent = copy[0]; $('#topSubtitle').textContent = copy[1];
+        const showBillingActions = name === 'billing';
+        $('#topPrintBtn').classList.toggle('hidden', !showBillingActions);
+        $('#topDownloadBtn').classList.toggle('hidden', !showBillingActions);
+        $('#topSaveBtn').classList.toggle('hidden', !showBillingActions);
+      }
+
+      function openAdminLogin() {
+        $('#adminLoginError').textContent = '';
+        $('#adminLoginModal').classList.add('open');
+        $('#adminEmail').focus();
+      }
+
+      function closeAdminLogin() {
+        $('#adminLoginModal').classList.remove('open');
+      }
+
+      function setAdminAccess(enabled) {
+        isAdminAuthenticated = enabled;
+        $$('[data-admin-only]').forEach(link => link.classList.toggle('hidden', !enabled));
+        $('#adminLogoutBtn').classList.toggle('hidden', !enabled);
+      }
+
+      function logoutAdmin() {
+        setAdminAccess(false);
+        closeAdminLogin();
+        switchPage('billing');
+        showToast('Admin sections locked.');
+      }
+
+      function setMobileMenuOpen(open) {
+        const toggle = $('#mobileMenuToggle');
+        const isOpen = open && window.matchMedia('(max-width: 1023px)').matches;
+        $('.sidebar').classList.toggle('sidebar-open', isOpen);
+        $('#sidebarBackdrop').classList.toggle('backdrop-open', isOpen);
+        toggle.setAttribute('aria-expanded', String(isOpen));
+        toggle.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+        $('i', toggle).className = isOpen ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+        document.body.classList.toggle('mobile-menu-active', isOpen);
+      }
+
+      function labelResponsiveTables() {
+        $$('.table-wrap table').forEach(table => {
+          const labels = $$('thead th', table).map(header => header.textContent.trim());
+          $$('tbody tr', table).forEach(row => {
+            $$('td', row).forEach((cell, index) => {
+              cell.dataset.label = labels[index] || '';
+              if (cell.querySelector(':scope > .table-cell-value')) return;
+              const value = document.createElement('div');
+              value.className = 'table-cell-value';
+              while (cell.firstChild) value.append(cell.firstChild);
+              cell.append(value);
+            });
+          });
+        });
+      }
+
+      function validateBill(draft) {
+        if (!draft.items.length) { showToast('Add at least one complete bill item.'); return false; }
+        const incomplete = $$('.product-row').some(row => {
+          const name = $('.item-name', row).value.trim();
+          return name && (!Number($('.item-qty', row).value) || Number($('.item-qty', row).value) <= 0 || $('.item-price', row).value === '' || Number($('.item-price', row).value) < 0 || $('.item-cost', row).value === '' || Number($('.item-cost', row).value) < 0);
+        });
+        if (incomplete) { showToast('Check item quantities, purchase costs, and prices.'); return false; }
+        const editingBill = editingBillNumber && bills.find(bill => bill.number === editingBillNumber);
+        const requestedQuantities = draft.items.reduce((quantities, item) => {
+          const key = item.name.toLocaleLowerCase();
+          quantities.set(key, (quantities.get(key) || 0) + item.quantity);
+          return quantities;
+        }, new Map());
+        for (const [name, quantity] of requestedQuantities) {
+          const product = products.find(entry => entry.name.toLocaleLowerCase() === name);
+          const previouslyReserved = editingBill ? (editingBill.items || []).filter(existing => existing.name.toLocaleLowerCase() === name).reduce((sum, existing) => sum + Number(existing.quantity || 0), 0) : 0;
+          if (product && quantity > product.stock + previouslyReserved) { showToast(`${product.name}: only ${product.stock + previouslyReserved} available for this bill.`); return false; }
+        }
+        return true;
+      }
+
+      async function saveBill() {
+        if (!requireReadyData()) return;
+        const draft = collectDraft();
+        if (!validateBill(draft)) return;
+        if (editingBillNumber) {
+          const billIndex = bills.findIndex(bill => bill.number === editingBillNumber);
+          const original = bills[billIndex];
+          if (!original) { showToast('This saved bill could not be found.'); cancelBillEdit(); return; }
+          const updated = { ...original, ...draft, amountPaid: Number(original.amountPaid || 0), payments: Array.isArray(original.payments) ? original.payments : [], paymentDate: original.paymentDate || draft.paymentDate, balanceDue: Math.max(0, draft.total - Number(original.amountPaid || 0)), id: original.id, createdAt: original.createdAt };
+          try {
+            const { error } = await supabase.rpc('save_bill', {
+              p_id: updated.id,
+              p_bill_number: updated.number,
+              p_bill_data: updated,
+              p_items: updated.items
+            });
+            if (error) throw error;
+            businessDataReady = false;
+            await Promise.all([loadInventory(), loadBills(), loadLedger()]);
+            applyLedgerPayments();
+            businessDataReady = true;
+          } catch (error) {
+            showToast(`Could not update bill: ${error.message || 'Supabase request failed.'}`);
+            return;
+          }
+          renderInventory(); renderHistory();
+          $('#invoicePreview').innerHTML = invoiceMarkup(updated);
+          $('#printInvoice').innerHTML = invoiceMarkup(updated);
+          showToast(`${updated.number} updated.`);
+          resetBill();
+          return;
+        }
+        const saved = { ...draft, payments: draft.amountPaid > 0 ? [{ amount: draft.amountPaid, date: draft.paymentDate, notes: draft.paymentNotes }] : [], id: newId(), createdAt: new Date().toISOString() };
+        let stored = false;
+        for (let attempt = 0; attempt < 3 && !stored; attempt += 1) {
+          saved.number = billNo();
+          try {
+            const { error } = await supabase.rpc('save_bill', {
+              p_id: saved.id,
+              p_bill_number: saved.number,
+              p_bill_data: saved,
+              p_items: saved.items
+            });
+            if (error) throw error;
+            stored = true;
+          } catch (error) {
+            if (error.code === '23505' && attempt < 2) {
+              await loadBills();
+              continue;
+            }
+            showToast(`Could not save bill: ${error.message || 'Supabase request failed.'}`);
+            return;
+          }
+        }
+        businessDataReady = false;
+        try {
+          await Promise.all([loadInventory(), loadBills(), loadLedger()]);
+          applyLedgerPayments();
+          businessDataReady = true;
+        } catch (error) {
+          showToast(`Bill saved, but the latest data could not be reloaded: ${error.message || 'Supabase request failed.'}`);
+          return;
+        }
+        $('#billNumberLabel').textContent = billNo();
+        renderInventory(); renderHistory();
+        $('#invoicePreview').innerHTML = invoiceMarkup(saved);
+        $('#printInvoice').innerHTML = invoiceMarkup(saved);
+        showToast(`${saved.number} saved and stock updated.`);
+        resetBill();
+      }
+
+      function resetBill() {
+        setBillEditMode(false);
+        $('#customerName').value = ''; $('#companyName').value = ''; $('#customerPhone').value = ''; $('#customerAddress').value = '';
+        $('#amountPaid').value = '0'; $('#paymentNotes').value = ''; $('#paymentDate').value = localDateInputValue();
+        $('#freightCharge').value = '0'; $('#otherCharge').value = '0'; $('#billItems').innerHTML = '';
+        $('#billNumberLabel').textContent = billNo(); addBillRow(); recalculate();
+      }
+
+      function setBillEditMode(enabled) {
+        if (!enabled) editingBillNumber = null;
+        $('#amountPaid').disabled = enabled;
+        $('#paymentDate').disabled = enabled;
+        $('#cancelBillEditBtn').classList.toggle('hidden', !enabled);
+        $('#saveBillBtn').innerHTML = enabled ? '<i class="fa-solid fa-check"></i>Update Bill' : '<i class="fa-solid fa-floppy-disk"></i>Save Bill';
+        $('#topSaveBtn').innerHTML = enabled ? '<i class="fa-solid fa-check"></i><span>Update Bill</span>' : '<i class="fa-solid fa-floppy-disk"></i><span>Save Bill</span>';
+      }
+
+      function editBill(index) {
+        const bill = bills[index];
+        if (!bill) return;
+        editingBillNumber = bill.number;
+        setBillEditMode(true);
+        $('#customerName').value = bill.customer?.name || '';
+        $('#companyName').value = bill.customer?.company || '';
+        $('#customerPhone').value = bill.customer?.phone || '';
+        $('#customerAddress').value = bill.customer?.address || '';
+        $('#freightCharge').value = Number(bill.freight || 0);
+        $('#otherCharge').value = Number(bill.other || 0);
+        $('#amountPaid').value = Number(bill.amountPaid || 0);
+        $('#paymentDate').value = bill.paymentDate || localDateInputValue();
+        $('#paymentNotes').value = bill.paymentNotes || '';
+        $('#billItems').innerHTML = '';
+        (bill.items || []).forEach(item => addBillRow(item));
+        if (!bill.items?.length) addBillRow();
+        $('#billNumberLabel').textContent = bill.number;
+        switchPage('billing');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showToast(`Editing ${bill.number}.`);
+      }
+
+      function cancelBillEdit() {
+        if (!editingBillNumber) return;
+        resetBill();
+        showToast('Bill edit cancelled.');
+      }
+
+      function openBill(index) {
+        const bill = bills[index]; if (!bill) return;
+        activeModalBill = bill;
+        $('#modalTitle').textContent = `Invoice ${bill.number}`;
+        $('#modalInvoice').innerHTML = invoiceMarkup(bill);
+        $('#billModal').classList.add('open');
+      }
+
+      function closeModal() { $('#billModal').classList.remove('open'); activeModalBill = null; }
+      function openLedgerPayment(index) {
+        const bill = bills[index];
+        if (!bill || billBalanceDue(bill) <= 0) return;
+        activeLedgerBillNumber = bill.number;
+        $('#ledgerPaymentBillLabel').textContent = `${bill.number} · ${bill.customer?.name || 'Walk-in customer'} · Due ${money(billBalanceDue(bill))}`;
+        $('#ledgerPaymentAmount').value = '';
+        $('#ledgerPaymentAmount').max = billBalanceDue(bill).toFixed(2);
+        $('#ledgerPaymentDate').value = localDateInputValue();
+        $('#ledgerPaymentNotes').value = '';
+        $('#ledgerPaymentModal').classList.add('open');
+        $('#ledgerPaymentAmount').focus();
+      }
+      function closeLedgerPayment() { $('#ledgerPaymentModal').classList.remove('open'); activeLedgerBillNumber = null; }
+      $('#ledgerPaymentForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        if (!requireReadyData()) return;
+        const bill = bills.find(entry => entry.number === activeLedgerBillNumber);
+        const amount = Number($('#ledgerPaymentAmount').value);
+        const date = $('#ledgerPaymentDate').value;
+        const notes = $('#ledgerPaymentNotes').value.trim();
+        const balanceDue = bill ? billBalanceDue(bill) : 0;
+        if (!bill || !Number.isFinite(amount) || amount <= 0 || amount > balanceDue || !date) {
+          showToast('Enter a valid payment amount no greater than the remaining balance.');
+          return;
+        }
+        try {
+          const { error } = await supabase.rpc('record_bill_payment', {
+            p_bill_id: bill.id,
+            p_amount: amount,
+            p_date: date,
+            p_notes: notes,
+            p_formatted_note: notes ? `${formatDate(date)}: ${notes}` : ''
+          });
+          if (error) throw error;
+          businessDataReady = false;
+          await Promise.all([loadBills(), loadLedger()]);
+          applyLedgerPayments();
+          businessDataReady = true;
+        } catch (error) {
+          showToast(`Could not save payment: ${error.message || 'Supabase request failed.'}`);
+          return;
+        }
+        closeLedgerPayment();
+        renderHistory();
+        const updatedBill = bills.find(entry => entry.id === bill.id);
+        showToast(billBalanceDue(updatedBill) > 0 ? 'Payment recorded; balance updated.' : 'Payment recorded; balance settled.');
+      });
+      function printBill(bill = null) {
+        const draft = bill || collectDraft();
+        if (!bill && !validateBill(draft)) return;
+        $('#printInvoice').innerHTML = invoiceMarkup(draft);
+        window.print();
+      }
+
+      async function downloadBillPdf() {
+        const draft = collectDraft();
+        if (!validateBill(draft)) return;
+        if (typeof window.html2pdf !== 'function') {
+          showToast('PDF download unavailable. Opening print dialog instead.');
+          printBill(draft);
+          return;
+        }
+
+        const liveReceipt = $('#invoicePreview .receipt');
+        if (!liveReceipt || !liveReceipt.textContent.trim()) {
+          showToast('Invoice preview is empty. Update the bill and try again.');
+          return;
+        }
+        const receiptSize = liveReceipt.getBoundingClientRect();
+        const pixelsToMillimeters = 25.4 / 96;
+        const pageWidth = Math.ceil(receiptSize.width * pixelsToMillimeters * 100) / 100;
+        const pageHeight = Math.ceil(receiptSize.height * pixelsToMillimeters * 100) / 100;
+        const invoiceContainer = document.createElement('div');
+        invoiceContainer.className = 'pdf-export-root';
+        invoiceContainer.style.width = `${receiptSize.width}px`;
+        invoiceContainer.append(liveReceipt.cloneNode(true));
+        const buttons = $$('.download-bill-btn');
+        buttons.forEach(button => { button.disabled = true; });
+        try {
+          const filenameNumber = String(draft.number).replace(/[^a-z0-9-]/gi, '');
+          await window.html2pdf().set({
+            margin: 0,
+            filename: `Invoice-${filenameNumber}.pdf`,
+            image: { type: 'png' },
+            html2canvas: { scale: 3, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
+            pagebreak: { mode: ['css', 'legacy'] },
+            jsPDF: { unit: 'mm', format: [pageWidth, pageHeight], orientation: 'portrait' }
+          }).from(invoiceContainer).save();
+          showToast('Bill PDF downloaded.');
+        } catch {
+          showToast('PDF download failed. Opening print dialog instead.');
+          printBill(draft);
+        } finally {
+          buttons.forEach(button => { button.disabled = false; });
+        }
+      }
+
+      async function deleteBill(index) {
+        if (!requireReadyData()) return;
+        const bill = bills[index]; if (!bill) return;
+        if (!window.confirm(`Delete saved invoice ${bill.number}? Stock will not be changed.`)) return;
+        try {
+          const { error } = await supabase.rpc('delete_bill', { p_bill_id: bill.id });
+          if (error) throw error;
+          businessDataReady = false;
+          await Promise.all([loadBills(), loadLedger()]);
+          applyLedgerPayments();
+          businessDataReady = true;
+          renderHistory();
+          showToast('Saved invoice deleted.');
+        } catch (error) {
+          showToast(`Could not delete bill: ${error.message || 'Supabase request failed.'}`);
+        }
+      }
+
+      $('#todayLabel').textContent = today();
+      $('#paymentDate').value = localDateInputValue();
+      $('#billNumberLabel').textContent = billNo();
+      $$('.nav-link').forEach(button => button.addEventListener('click', () => switchPage(button.dataset.page)));
+      $('#mobileMenuToggle').addEventListener('click', () => setMobileMenuOpen(!$('.sidebar').classList.contains('sidebar-open')));
+      $('#sidebarBackdrop').addEventListener('click', () => setMobileMenuOpen(false));
+      $$('.nav-link').forEach(button => button.addEventListener('click', () => setMobileMenuOpen(false)));
+      $('#adminLoginForm').addEventListener('submit', event => {
+        event.preventDefault();
+        const email = $('#adminEmail').value.trim();
+        const password = $('#adminPassword').value;
+        if (email !== ADMIN_CREDENTIALS.email || password !== ADMIN_CREDENTIALS.password) {
+          $('#adminLoginError').textContent = 'Invalid Email or Password';
+          $('#adminPassword').focus();
+          return;
+        }
+        setAdminAccess(true);
+        closeAdminLogin();
+        $('#adminLoginForm').reset();
+        switchPage('financials');
+      });
+      $('#closeAdminLogin').addEventListener('click', closeAdminLogin);
+      $('#cancelAdminLogin').addEventListener('click', closeAdminLogin);
+      $('#adminLoginModal').addEventListener('click', event => { if (event.target === $('#adminLoginModal')) closeAdminLogin(); });
+      $('#adminLogoutBtn').addEventListener('click', logoutAdmin);
+      $('#addItemBtn').addEventListener('click', () => addBillRow());
+      $$('.charge-input').forEach(input => input.addEventListener('input', recalculate));
+      ['customerName', 'companyName', 'customerPhone', 'customerAddress'].forEach(id => $(`#${id}`).addEventListener('input', recalculate));
+      ['amountPaid', 'paymentNotes', 'paymentDate'].forEach(id => $(`#${id}`).addEventListener('input', recalculate));
+      $('#updateBillBtn').addEventListener('click', () => { renderPreview(); showToast('Invoice preview updated.'); });
+      $('#printBillBtn').addEventListener('click', () => printBill());
+      $('#topPrintBtn').addEventListener('click', () => printBill());
+      $$('.download-bill-btn').forEach(button => button.addEventListener('click', downloadBillPdf));
+      $('#saveBillBtn').addEventListener('click', saveBill);
+      $('#topSaveBtn').addEventListener('click', saveBill);
+      $('#cancelBillEditBtn').addEventListener('click', cancelBillEdit);
+      $('#purchaseForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        if (!requireReadyData()) return;
+        const name = $('#purchaseName').value.trim();
+        const description = $('#purchaseDescription').value.trim();
+        const purchaseRate = Number($('#purchaseRate').value), sellingRate = Number($('#sellingRate').value), quantity = Number($('#purchaseQty').value);
+        if (!name || purchaseRate < 0 || sellingRate < 0 || quantity <= 0 || !Number.isFinite(quantity)) return;
+        try {
+          const { error } = await supabase.rpc('receive_inventory', {
+            p_id: newId(),
+            p_product_name: name,
+            p_description: description,
+            p_purchase_rate: purchaseRate,
+            p_price: sellingRate,
+            p_quantity: quantity
+          });
+          if (error) throw error;
+          businessDataReady = false;
+          await loadInventory();
+          businessDataReady = true;
+          renderInventory();
+          $('#purchaseForm').reset();
+          showToast(`${quantity} unit${quantity === 1 ? '' : 's'} added to ${name}.`);
+        } catch (error) {
+          showToast(`Could not update inventory: ${error.message || 'Supabase request failed.'}`);
+        }
+      });
+      $('#expenseDate').value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      $('#expenseForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        if (!requireReadyData()) return;
+        const expense = { id: newId(), title: $('#expenseTitle').value.trim(), category: $('#expenseCategory').value, amount: Number($('#expenseAmount').value), date: $('#expenseDate').value, createdAt: new Date().toISOString() };
+        if (!expense.title || !expense.date || !Number.isFinite(expense.amount) || expense.amount <= 0) return;
+        try {
+          const { error } = await supabase.from('expenses').insert({
+            id: expense.id,
+            title: expense.title,
+            category: expense.category,
+            amount: expense.amount,
+            expense_date: expense.date,
+            created_at: expense.createdAt
+          });
+          if (error) throw error;
+          businessDataReady = false;
+          await loadExpenses();
+          businessDataReady = true;
+          const retainedDate = expense.date;
+          $('#expenseForm').reset(); $('#expenseDate').value = retainedDate;
+          renderExpenses(); showToast('Expense recorded.');
+        } catch (error) {
+          showToast(`Could not save expense: ${error.message || 'Supabase request failed.'}`);
+        }
+      });
+      $('#closeModal').addEventListener('click', closeModal); $('#modalCloseBtn').addEventListener('click', closeModal);
+      $('#billModal').addEventListener('click', event => { if (event.target === $('#billModal')) closeModal(); });
+      $('#closeLedgerPayment').addEventListener('click', closeLedgerPayment); $('#cancelLedgerPayment').addEventListener('click', closeLedgerPayment);
+      $('#ledgerPaymentModal').addEventListener('click', event => { if (event.target === $('#ledgerPaymentModal')) closeLedgerPayment(); });
+      $('#modalPrintBtn').addEventListener('click', () => { if (activeModalBill) printBill(activeModalBill); });
+      document.addEventListener('keydown', event => { if (event.key === 'Escape') { closeModal(); closeLedgerPayment(); closeAdminLogin(); setMobileMenuOpen(false); } });
+      window.addEventListener('resize', () => { if (window.innerWidth > 1023) setMobileMenuOpen(false); });
+      window.addEventListener('afterprint', () => { if (!activeModalBill) renderPreview(); });
+      $('#expenseDate').value = localDateInputValue();
+      loadBusinessData().catch(error => {
+        showToast(`Could not load business data: ${error.message || 'Check the Supabase URL, key, tables, and access policies.'}`);
+      });
+    })();
+  </script>
+</body>
+</html>
