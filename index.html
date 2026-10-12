@@ -139,6 +139,11 @@
     .modal{width:min(720px,100%);max-height:90vh;overflow:auto;background:#f6f8f6;border-radius:10px;padding:18px}
     .mobile-menu{display:none}
     #printInvoice{display:none}
+    .history-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+    .history-tools{display:flex;align-items:center;gap:12px}
+    .history-search{position:relative;display:block;width:288px;max-width:100%}
+    .history-search i{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#829088;pointer-events:none}
+    .history-search .field{padding-left:36px}
     @media(max-width:900px){.content{padding:24px 22px}.topbar{padding:0 22px}.product-row,.items-heading{grid-template-columns:minmax(0,24fr) minmax(40px,8fr) repeat(3,minmax(0,13fr)) minmax(0,16fr) minmax(0,9fr) 32px;gap:0}#billItems.discount-hidden .product-row,.items-heading.discount-hidden{grid-template-columns:minmax(0,27fr) minmax(40px,9fr) minmax(0,15fr) minmax(0,14fr) minmax(0,18fr) minmax(0,12fr) 32px}.product-row .field{padding:0 4px}}
     @media(max-width:1279px){.billing-layout{grid-template-columns:minmax(0,1fr)}}
     @media(min-width:1280px){.content{padding-right:408px}.billing-layout{grid-template-columns:minmax(0,1fr)}.invoice-preview-sticky{position:fixed;right:24px;top:96px;width:360px;height:fit-content;max-height:calc(100vh - 112px);z-index:100}}
@@ -153,6 +158,10 @@
       .product-row .field-label{display:none}
     }
     @media(max-width:767px){
+      .history-toolbar{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+      .history-tools{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;width:100%}
+      .history-search{width:100%}
+      #historyCount{text-align:right}
       .items-heading{display:none!important}
       .product-row,#billItems.discount-hidden .product-row{display:grid!important;grid-template-columns:minmax(0,1fr) 36px!important;gap:10px 8px;width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--card);box-shadow:0 2px 8px #18332a08}
       .item-primary-row,.item-pricing-row,.item-totals-row{grid-column:1/-1!important;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
@@ -676,7 +685,7 @@
         </section>
 
         <section id="page-history" class="page">
-          <div class="flex flex-wrap items-end justify-between gap-3 mb-5"><div><h1 class="text-xl font-bold text-[#20342c]">Bill history</h1><p class="text-xs text-[#77857e] mt-1">Search and view saved invoices.</p></div><div class="flex items-center gap-3"><label class="relative block w-full sm:w-72"><span class="sr-only">Search bills</span><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#829088]" aria-hidden="true"></i><input class="field pl-9" id="billSearch" type="search" placeholder="Search invoice, customer, item..." autocomplete="off"></label><div class="text-[11px] text-[#718078] whitespace-nowrap" id="historyCount">0 bills</div></div></div>
+          <div class="history-toolbar mb-5"><div><h1 class="text-xl font-bold text-[#20342c]">Bill history</h1><p class="text-xs text-[#77857e] mt-1">Search and view saved invoices.</p></div><div class="history-tools"><label class="history-search"><span class="sr-only">Search bills</span><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input class="field" id="billSearch" type="search" placeholder="Search invoice, customer, item..." autocomplete="off"></label><div class="text-[11px] text-[#718078] whitespace-nowrap" id="historyCount">0 bills</div></div></div>
           <section class="panel overflow-hidden"><div class="table-wrap"><table><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Items summary</th><th>Reason / notes</th><th>Total</th><th>Paid</th><th>Balance due</th><th>Profit</th><th>Actions</th></tr></thead><tbody id="historyBody"></tbody></table></div><div id="historyEmpty" class="empty-state hidden"><i class="fa-regular fa-file-lines text-xl mb-2"></i><div>No saved bills yet.</div></div></section>
         </section>
 
