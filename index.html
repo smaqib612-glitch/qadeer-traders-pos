@@ -69,7 +69,12 @@
     td{font-size:12px;padding:12px 14px;border-top:1px solid #edf1ee;vertical-align:middle}
     .pill{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:700}
     .pill-green{background:#e9f4eb;color:#33704a}.pill-amber{background:#fff3df;color:#9a6b24}.pill-red{background:#fcebea;color:#a4423b}
-    .product-row{display:grid;grid-template-columns:minmax(135px,1.5fr) 54px repeat(4,minmax(72px,1fr)) 30px;gap:7px;align-items:end;padding:12px 0;border-bottom:1px solid #edf1ee}
+    .product-row,.items-heading{grid-template-columns:minmax(0,24fr) minmax(40px,8fr) repeat(3,minmax(0,13fr)) minmax(0,16fr) minmax(0,9fr) 32px;gap:0}
+    #billItems.discount-hidden .product-row,.items-heading.discount-hidden{grid-template-columns:minmax(0,27fr) minmax(40px,9fr) minmax(0,15fr) minmax(0,14fr) minmax(0,18fr) minmax(0,12fr) 32px}
+    .product-row{display:grid;align-items:end;padding:12px 0;border-bottom:1px solid #edf1ee}
+    .items-heading{display:grid}
+    .items-heading>span,.product-row>*{min-width:0}
+    .discount-col-hidden{display:none!important}
     .product-row:last-child{border-bottom:0}
     .product-row .field{height:36px;font-size:12px;padding:0 9px}
     .product-row label{font-size:10px}
@@ -92,12 +97,18 @@
     .receipt-customer-row{display:grid;grid-template-columns:62px minmax(0,1fr);gap:4px;line-height:1.6;text-align:left;overflow-wrap:anywhere}
     .receipt-customer-row>:last-child{text-align:right}
     .receipt table{width:100%;table-layout:fixed;border-collapse:collapse;text-align:left}
-    .receipt th{padding:8px 4px;background:#f8faf8;color:#718078;font-size:9px;font-weight:700;text-transform:uppercase;white-space:nowrap}
-    .receipt td{padding:8px 4px;border-top:1px solid #edf1ee;vertical-align:top;font-size:10px;overflow-wrap:anywhere}
-    .receipt th:first-child,.receipt td:first-child{width:60%}
-    .receipt th:nth-child(2),.receipt td:nth-child(2){width:15%}
-    .receipt th:nth-child(3),.receipt td:nth-child(3){width:25%}
-    .receipt .receipt-numeric{text-align:right}
+    .receipt th{padding:7px 3px;background:#f8faf8;color:#718078;font-size:8px;line-height:1.25;font-weight:700;text-transform:uppercase;white-space:normal;vertical-align:middle}
+    .receipt td{padding:7px 3px;border-top:1px solid #edf1ee;vertical-align:middle;font-size:9px;overflow-wrap:anywhere}
+    .receipt th:first-child,.receipt td:first-child{width:20%;text-align:left}
+    .receipt th:nth-child(2),.receipt td:nth-child(2){width:12%;text-align:left}
+    .receipt th:nth-child(3),.receipt td:nth-child(3){width:18%;text-align:left;white-space:nowrap}
+    .receipt th:nth-child(4),.receipt td:nth-child(4){width:22%;text-align:left;white-space:nowrap}
+    .receipt th:nth-child(5),.receipt td:nth-child(5){width:28%;text-align:left;white-space:nowrap}
+    .receipt.discount-hidden th:first-child,.receipt.discount-hidden td:first-child{width:28%}
+    .receipt.discount-hidden th:nth-child(2),.receipt.discount-hidden td:nth-child(2){width:15%}
+    .receipt.discount-hidden th:nth-child(3),.receipt.discount-hidden td:nth-child(3){width:26%}
+    .receipt.discount-hidden th:nth-child(4),.receipt.discount-hidden td:nth-child(4){width:31%}
+    .receipt .receipt-numeric{font-size:8px}
     .receipt-item-name{font-weight:600}
     .receipt-empty{text-align:center;color:#87928c;padding:18px 4px!important}
     .receipt-totals{margin-top:8px;padding-top:8px;border-top:1px solid #dce4de}
@@ -128,11 +139,19 @@
     .modal{width:min(720px,100%);max-height:90vh;overflow:auto;background:#f6f8f6;border-radius:10px;padding:18px}
     .mobile-menu{display:none}
     #printInvoice{display:none}
-    @media(max-width:900px){.content{padding:24px 22px}.topbar{padding:0 22px}.product-row{grid-template-columns:minmax(115px,1.5fr) 48px repeat(4,minmax(64px,1fr)) 28px;gap:5px}}
+    @media(max-width:900px){.content{padding:24px 22px}.topbar{padding:0 22px}.product-row,.items-heading{grid-template-columns:minmax(0,24fr) minmax(40px,8fr) repeat(3,minmax(0,13fr)) minmax(0,16fr) minmax(0,9fr) 32px;gap:0}#billItems.discount-hidden .product-row,.items-heading.discount-hidden{grid-template-columns:minmax(0,27fr) minmax(40px,9fr) minmax(0,15fr) minmax(0,14fr) minmax(0,18fr) minmax(0,12fr) 32px}.product-row .field{padding:0 4px}}
     @media(max-width:1279px){.billing-layout{grid-template-columns:minmax(0,1fr)}}
     @media(min-width:1280px){.content{padding-right:408px}.billing-layout{grid-template-columns:minmax(0,1fr)}.invoice-preview-sticky{position:fixed;right:24px;top:96px;width:360px;height:fit-content;max-height:calc(100vh - 112px);z-index:100}}
-    @media(max-width:680px){.app-shell{min-height:100vh;display:block}.sidebar{position:static;height:auto;min-height:0;overflow:visible;padding:13px 15px;display:block}.sidebar-brand{display:flex;align-items:center;justify-content:space-between}.sidebar-nav{display:flex;gap:5px;overflow:auto;margin-top:12px;padding-bottom:2px}.nav-link{flex:0 0 auto;padding:9px 10px;font-size:11px}.nav-link.active{box-shadow:inset 0 -2px #d1a15f}.nav-link i{width:auto}.sidebar-footer{display:none}.topbar{height:60px;padding:0 16px}.content{padding:18px 14px 30px}.invoice-preview-sticky{position:static;max-height:none;overflow:visible}.items-heading{display:none!important}.product-row{grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;padding:10px 0}.product-row>.item-details{grid-column:1/9}.product-row>div:nth-child(2){grid-column:9/12}.product-row>div:nth-child(3),.product-row>div:nth-child(4),.product-row>div:nth-child(5),.product-row>div:nth-child(6){grid-column:span 3}.product-row>.remove-item{grid-column:12/13;align-self:end;width:28px;height:36px}.product-row .field{padding:0 6px;font-size:11px}.product-row label{font-size:9px}.line-value{font-size:10px}.hide-mobile{display:none}.stat-value{font-size:18px}.invoice-paper{padding:18px 14px}.receipt{padding:18px 14px}.header-actions .btn span{display:none}.header-actions .btn{width:38px;padding:0}.modal{padding:10px}}
+    @media(max-width:680px){.app-shell{min-height:100vh;display:block}.sidebar{position:static;height:auto;min-height:0;overflow:visible;padding:13px 15px;display:block}.sidebar-brand{display:flex;align-items:center;justify-content:space-between}.sidebar-nav{display:flex;gap:5px;overflow:auto;margin-top:12px;padding-bottom:2px}.nav-link{flex:0 0 auto;padding:9px 10px;font-size:11px}.nav-link.active{box-shadow:inset 0 -2px #d1a15f}.nav-link i{width:auto}.sidebar-footer{display:none}.topbar{height:60px;padding:0 16px}.content{padding:18px 14px 30px}.invoice-preview-sticky{position:static;max-height:none;overflow:visible}.items-heading{display:none!important}.product-row{grid-template-columns:repeat(10,minmax(0,1fr)) 28px;gap:5px;padding:10px 0}.product-row>.item-details{grid-column:1/8}.product-row>div:nth-child(2){grid-column:8/11}.product-row>div:nth-child(3),.product-row>div:nth-child(4),.product-row>div:nth-child(5),.product-row>div:nth-child(6),.product-row>div:nth-child(7){grid-column:span 2}.product-row>.remove-item{grid-column:11/12;align-self:end;width:28px;height:36px}.product-row .field{padding:0 6px;font-size:11px}.product-row label{font-size:9px}.line-value{font-size:10px}.hide-mobile{display:none}.stat-value{font-size:18px}.invoice-paper{padding:18px 14px}.receipt{padding:18px 14px}.header-actions .btn span{display:none}.header-actions .btn{width:38px;padding:0}.modal{padding:10px}}
     @media(max-width:680px){.product-row .field-label{display:block}}
+    @media(max-width:680px){
+      .product-row{grid-template-columns:minmax(0,1fr);gap:9px;padding:12px 0}
+      .product-row>.item-details,.product-row>div:nth-child(2),.product-row>div:nth-child(3),.product-row>div:nth-child(4),.product-row>div:nth-child(5),.product-row>div:nth-child(6),.product-row>div:nth-child(7),.product-row>.remove-item{grid-column:1}
+      .product-row .field{width:100%;height:41px;padding:0 11px;font-size:13px}
+      .product-row .field-label{margin-bottom:5px;font-size:11px}
+      .product-row .line-value{width:100%;height:41px;padding:0 11px;border:1px solid #d6dfd9;border-radius:7px;background:#fff;font-size:13px}
+      .product-row>.remove-item{justify-self:end}
+    }
     @media print{
       @page{size:A4 portrait;margin:0}
       html,body{width:auto!important;min-width:0!important;margin:0!important;padding:0!important;background:white!important;color:#111!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -556,7 +575,8 @@
 
               <section class="panel p-4 sm:p-5">
                 <div class="flex items-center justify-between gap-3 mb-2"><div><div class="section-title">Bill items</div><div class="section-caption">Choose a stocked item or enter a custom product.</div></div><button id="addItemBtn" class="btn btn-soft" type="button"><i class="fa-solid fa-plus"></i><span>Add item</span></button></div>
-                <div class="items-heading grid grid-cols-[minmax(135px,1.5fr)_54px_repeat(4,minmax(72px,1fr))_30px] gap-[7px] px-0 pt-2 text-[9px] font-bold uppercase tracking-wider text-[#86928c]"><span>Item / description</span><span>Qty</span><span>Cost</span><span>Selling</span><span>Amount</span><span>Profit</span><span></span></div>
+                <div id="itemsHeading" class="items-heading px-0 pt-2 text-[9px] font-bold uppercase tracking-wider text-[#86928c]"><span>Item</span><span>Qty</span><span>Cost price</span><span>Rate</span><span class="discount-col">Discount</span><span>Final amount</span><span>Profit</span><span></span></div>
+                <label class="mb-2 inline-flex cursor-pointer items-center gap-2 text-[11px] font-semibold text-[#526158]" for="showDiscount"><input id="showDiscount" type="checkbox" checked class="h-4 w-4 accent-[#107c41]"><span>Show Discount</span></label>
                 <div id="billItems"></div>
                 <datalist id="productOptions"></datalist>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 pt-4 border-t border-[#edf1ee]">
@@ -711,6 +731,7 @@
       const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
       const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
       const money = value => `Rs. ${Number(value || 0).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      const roundMoney = value => Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
       const today = () => new Date().toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' });
       const formatDate = value => {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))) return value || today();
@@ -937,12 +958,31 @@
       function addBillRow(item = {}) {
         const row = document.createElement('div');
         row.className = 'product-row';
-        row.innerHTML = `<div class="item-details"><label class="field-label">Item name</label><input class="field item-name" list="productOptions" placeholder="Item name" value="${escapeHtml(item.name || '')}"></div><div><label class="field-label">Qty</label><input class="field item-qty" type="number" min="0.01" step="any" value="${item.quantity ?? 1}"></div><div><label class="field-label">Cost (Rs.)</label><input class="field item-cost" type="number" min="0" step="0.01" value="${item.purchaseRate ?? ''}" placeholder="0.00"></div><div><label class="field-label">Selling (Rs.)</label><input class="field item-price" type="number" min="0" step="0.01" value="${item.price ?? ''}" placeholder="0.00"></div><div><label class="field-label">Amount</label><span class="line-value line-amount">${money(item.quantity * item.price)}</span></div><div><label class="field-label">Profit</label><span class="line-value line-profit">${money(item.quantity * (item.price - item.purchaseRate))}</span></div><button class="icon-button remove-item" type="button" aria-label="Remove item"><i class="fa-solid fa-xmark"></i></button>`;
+        const namedProduct = products.find(product => product.name.trim().toLocaleLowerCase() === String(item.name || '').trim().toLocaleLowerCase());
+        row.dataset.productId = item.product_id || namedProduct?.id || '';
+        const rate = item.rate ?? item.price ?? namedProduct?.sellingRate ?? '';
+        const costPrice = item.cost_price ?? item.purchaseRate ?? namedProduct?.purchaseRate ?? '';
+        row.innerHTML = `<div class="item-details"><label class="field-label">Item</label><input class="field item-name" list="productOptions" placeholder="Item name" value="${escapeHtml(item.name || '')}"></div><div><label class="field-label">Qty</label><input class="field item-qty" type="number" min="0.01" step="any" value="${item.quantity ?? 1}"></div><div><label class="field-label">Cost price (Rs.)</label><input class="field item-cost" type="number" min="0" step="0.01" value="${costPrice}" placeholder="0.00"></div><div><label class="field-label">Rate (Rs.)</label><input class="field item-price" type="number" min="0" step="0.01" value="${rate}" placeholder="0.00"></div><div class="discount-col"><label class="field-label">Discount (Rs.)</label><input class="field item-discount" type="number" min="0" step="0.01" value="${item.discount ?? 0}" placeholder="0.00"></div><div><label class="field-label">Final amount</label><span class="line-value line-amount">${money(item.final_amount ?? item.amount ?? (item.quantity * rate))}</span></div><div><label class="field-label">Profit</label><span class="line-value line-profit">${money(item.profit ?? 0)}</span></div><button class="icon-button remove-item" type="button" aria-label="Remove item"><i class="fa-solid fa-xmark"></i></button>`;
         $('#billItems').append(row);
-        $('.item-name', row).addEventListener('input', recalculate);
+        $('.item-name', row).addEventListener('input', () => {
+          const product = products.find(entry => entry.name.trim().toLocaleLowerCase() === $('.item-name', row).value.trim().toLocaleLowerCase());
+          if (product) {
+            row.dataset.productId = product.id;
+          } else if (row.dataset.productId) {
+            row.dataset.productId = '';
+            $('.item-cost', row).value = '';
+          }
+          recalculate();
+        });
         $('.item-name', row).addEventListener('change', () => fillProductDetails(row));
         $('.item-name', row).addEventListener('blur', () => fillProductDetails(row));
-        $$('.item-qty, .item-cost, .item-price', row).forEach(input => input.addEventListener('input', recalculate));
+        $$('.item-qty, .item-cost, .item-price, .item-discount', row).forEach(input => input.addEventListener('input', recalculate));
+        $('.item-discount', row).addEventListener('change', () => {
+          const itemSubtotal = roundMoney((Number($('.item-qty', row).value) || 0) * (Number($('.item-price', row).value) || 0));
+          const discount = Math.min(itemSubtotal, Math.max(0, Number($('.item-discount', row).value) || 0));
+          $('.item-discount', row).value = roundMoney(discount).toFixed(2);
+          recalculate();
+        });
         $('.remove-item', row).addEventListener('click', () => { row.remove(); if (!$$('.product-row').length) addBillRow(); recalculate(); });
         recalculate();
       }
@@ -951,23 +991,45 @@
         const input = $('.item-name', row).value.trim().toLocaleLowerCase();
         const product = products.find(entry => entry.name.trim().toLocaleLowerCase() === input);
         if (!product) return;
+        row.dataset.productId = product.id;
         $('.item-cost', row).value = product.purchaseRate;
         $('.item-price', row).value = product.sellingRate;
         recalculate();
       }
 
       function collectDraft() {
-        const items = $$('.product-row').map(row => ({
-          name: $('.item-name', row).value.trim(),
-          quantity: Number($('.item-qty', row).value), purchaseRate: Number($('.item-cost', row).value), price: Number($('.item-price', row).value),
-          amount: (Number($('.item-qty', row).value) || 0) * (Number($('.item-price', row).value) || 0),
-          profit: (Number($('.item-qty', row).value) || 0) * ((Number($('.item-price', row).value) || 0) - (Number($('.item-cost', row).value) || 0))
-        })).filter(item => item.name && item.quantity > 0 && item.price >= 0);
-        const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-        const profit = items.reduce((sum, item) => sum + item.profit, 0);
+        const items = $$('.product-row').map(row => {
+          const name = $('.item-name', row).value.trim();
+          const product = products.find(entry => entry.id === row.dataset.productId) || products.find(entry => entry.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase());
+          const quantity = Number($('.item-qty', row).value) || 0;
+          const rate = Number($('.item-price', row).value) || 0;
+          const itemSubtotal = roundMoney(quantity * rate);
+          const discount = $('#showDiscount').checked
+            ? roundMoney(Math.min(itemSubtotal, Math.max(0, Number($('.item-discount', row).value) || 0)))
+            : 0;
+          const finalAmount = roundMoney(itemSubtotal - discount);
+          const costPrice = Number($('.item-cost', row).value) || 0;
+          const profit = roundMoney(finalAmount - quantity * costPrice);
+          return {
+            name,
+            product_id: product?.id || null,
+            quantity,
+            rate,
+            discount,
+            final_amount: finalAmount,
+            subtotal: itemSubtotal,
+            cost_price: costPrice,
+            purchaseRate: costPrice,
+            price: rate,
+            amount: finalAmount,
+            profit
+          };
+        }).filter(item => item.name && item.quantity > 0 && item.rate >= 0);
+        const subtotal = roundMoney(items.reduce((sum, item) => sum + item.final_amount, 0));
+        const profit = roundMoney(items.reduce((sum, item) => sum + item.profit, 0));
         const freight = Math.max(0, Number($('#freightCharge').value) || 0);
         const other = Math.max(0, Number($('#otherCharge').value) || 0);
-        const total = subtotal + freight + other;
+        const total = roundMoney(subtotal + freight + other);
         const amountPaid = Math.max(0, Number($('#amountPaid').value) || 0);
         const paymentDate = $('#paymentDate').value || localDateInputValue();
         return { number: editingBillNumber || billNo(), date: formatDate(paymentDate), paymentDate, customer: { name: $('#customerName').value.trim(), company: $('#companyName').value.trim(), phone: $('#customerPhone').value.trim(), address: $('#customerAddress').value.trim() }, items, freight, other, subtotal, profit, total, amountPaid, balanceDue: Math.max(0, total - amountPaid), paymentNotes: $('#paymentNotes').value.trim() };
@@ -978,9 +1040,11 @@
         const rows = (bill.items || []).map(item => `<tr>
           <td><div class="receipt-item-name">${escapeHtml(item.name)}</div></td>
           <td class="receipt-numeric">${Number(item.quantity)}</td>
-          <td class="receipt-numeric">${money(item.quantity * item.price)}</td>
+          <td class="receipt-numeric">${money(item.rate ?? item.price)}</td>
+          ${$('#showDiscount').checked ? `<td class="receipt-numeric">${money(item.discount || 0)}</td>` : ''}
+          <td class="receipt-numeric">${money(item.final_amount ?? item.amount ?? item.quantity * item.price)}</td>
         </tr>`).join('');
-        return `<article class="receipt">
+        return `<article class="receipt${$('#showDiscount').checked ? '' : ' discount-hidden'}">
           <header class="receipt-header">
             <div class="receipt-business-name">${BUSINESS.name}</div>
             <div class="receipt-business-details">${BUSINESS.address}<br>Phone: ${BUSINESS.phone}</div>
@@ -996,8 +1060,8 @@
             <div class="receipt-customer-row"><span class="receipt-label">Address</span><span>${escapeHtml(customer.address || '-')}</span></div>
           </section>
           <table aria-label="Invoice items">
-            <thead><tr><th>Item</th><th class="receipt-numeric">Qty</th><th class="receipt-numeric">Amount</th></tr></thead>
-            <tbody>${rows || '<tr><td class="receipt-empty" colspan="3">No items added</td></tr>'}</tbody>
+            <thead><tr><th>Item</th><th class="receipt-numeric">Qty</th><th class="receipt-numeric">Rate</th>${$('#showDiscount').checked ? '<th class="receipt-numeric">Discount</th>' : ''}<th class="receipt-numeric">Final amount</th></tr></thead>
+            <tbody>${rows || `<tr><td class="receipt-empty" colspan="${$('#showDiscount').checked ? 5 : 4}">No items added</td></tr>`}</tbody>
           </table>
           <section class="receipt-totals" aria-label="Invoice totals">
             <div class="receipt-total-row"><span>Subtotal</span><span class="receipt-total-value">${money(bill.subtotal)}</span></div>
@@ -1027,11 +1091,22 @@
         const draft = collectDraft();
         $$('.product-row').forEach(row => {
           const quantity = Number($('.item-qty', row).value) || 0;
-          const purchaseRate = Number($('.item-cost', row).value) || 0;
-          const sellingRate = Number($('.item-price', row).value) || 0;
-          $('.line-amount', row).textContent = money(quantity * sellingRate);
-          $('.line-profit', row).textContent = money(quantity * (sellingRate - purchaseRate));
+          const rate = Number($('.item-price', row).value) || 0;
+          const itemSubtotal = roundMoney(quantity * rate);
+          const discount = $('#showDiscount').checked
+            ? roundMoney(Math.min(itemSubtotal, Math.max(0, Number($('.item-discount', row).value) || 0)))
+            : 0;
+          const finalAmount = roundMoney(itemSubtotal - discount);
+          const costPrice = Number($('.item-cost', row).value) || 0;
+          const profit = roundMoney(finalAmount - quantity * costPrice);
+          $('.item-discount', row).max = itemSubtotal.toFixed(2);
+          $('.line-amount', row).textContent = money(finalAmount);
+          $('.line-profit', row).textContent = money(profit);
         });
+        const discountHidden = !$('#showDiscount').checked;
+        $('#itemsHeading').classList.toggle('discount-hidden', discountHidden);
+        $('#billItems').classList.toggle('discount-hidden', discountHidden);
+        $$('.discount-col').forEach(column => column.classList.toggle('discount-col-hidden', discountHidden));
         $('#subtotalText').textContent = money(draft.subtotal);
         $('#billProfitText').textContent = money(draft.profit);
         $('#grandTotalText').textContent = money(draft.total);
@@ -1227,9 +1302,9 @@
         if (!draft.items.length) { showToast('Add at least one complete bill item.'); return false; }
         const incomplete = $$('.product-row').some(row => {
           const name = $('.item-name', row).value.trim();
-          return name && (!Number($('.item-qty', row).value) || Number($('.item-qty', row).value) <= 0 || $('.item-price', row).value === '' || Number($('.item-price', row).value) < 0 || $('.item-cost', row).value === '' || Number($('.item-cost', row).value) < 0);
+          return name && (!Number($('.item-qty', row).value) || Number($('.item-qty', row).value) <= 0 || $('.item-cost', row).value === '' || Number($('.item-cost', row).value) < 0 || $('.item-price', row).value === '' || Number($('.item-price', row).value) < 0 || ($('#showDiscount').checked && Number($('.item-discount', row).value) < 0));
         });
-        if (incomplete) { showToast('Check item quantities, purchase costs, and prices.'); return false; }
+        if (incomplete) { showToast('Check item quantities, cost prices, rates, and discounts.'); return false; }
         const editingBill = editingBillNumber && bills.find(bill => bill.number === editingBillNumber);
         const requestedQuantities = draft.items.reduce((quantities, item) => {
           const key = item.name.toLocaleLowerCase();
@@ -1511,6 +1586,7 @@
       $('#adminLoginModal').addEventListener('click', event => { if (event.target === $('#adminLoginModal')) closeAdminLogin(); });
       $('#adminLogoutBtn').addEventListener('click', logoutAdmin);
       $('#addItemBtn').addEventListener('click', () => addBillRow());
+      $('#showDiscount').addEventListener('change', recalculate);
       $$('.charge-input').forEach(input => input.addEventListener('input', recalculate));
       ['customerName', 'companyName', 'customerPhone', 'customerAddress'].forEach(id => $(`#${id}`).addEventListener('input', recalculate));
       ['amountPaid', 'paymentNotes', 'paymentDate'].forEach(id => $(`#${id}`).addEventListener('input', recalculate));
