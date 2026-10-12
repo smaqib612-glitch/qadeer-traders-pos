@@ -579,7 +579,6 @@
                 <div class="flex justify-between items-start mb-4"><div><div class="section-title">Customer details</div><div class="section-caption">Invoice <span id="billNumberLabel"></span></div></div><span class="text-[10px] font-bold text-[#51806a] bg-[#edf4ef] px-2.5 py-1 rounded-full">NEW SALE</span></div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div><label class="field-label" for="customerName">Customer name</label><input class="field" id="customerName" placeholder="Walk-in customer" autocomplete="name"></div>
-                  <div><label class="field-label" for="companyName">Company name</label><input class="field" id="companyName" placeholder="Company (optional)"></div>
                   <div><label class="field-label" for="customerPhone">Phone number</label><input class="field" id="customerPhone" placeholder="03xx xxxxxxx" inputmode="tel"></div>
                   <div><label class="field-label" for="customerAddress">Address</label><input class="field" id="customerAddress" placeholder="Customer address"></div>
                 </div>
@@ -677,7 +676,7 @@
         </section>
 
         <section id="page-history" class="page">
-          <div class="flex items-end justify-between gap-3 mb-5"><div><h1 class="text-xl font-bold text-[#20342c]">Bill history</h1><p class="text-xs text-[#77857e] mt-1">Saved invoices from this device.</p></div><div class="text-[11px] text-[#718078]" id="historyCount">0 bills</div></div>
+          <div class="flex flex-wrap items-end justify-between gap-3 mb-5"><div><h1 class="text-xl font-bold text-[#20342c]">Bill history</h1><p class="text-xs text-[#77857e] mt-1">Search and view saved invoices.</p></div><div class="flex items-center gap-3"><label class="relative block w-full sm:w-72"><span class="sr-only">Search bills</span><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#829088]" aria-hidden="true"></i><input class="field pl-9" id="billSearch" type="search" placeholder="Search invoice, customer, item..." autocomplete="off"></label><div class="text-[11px] text-[#718078] whitespace-nowrap" id="historyCount">0 bills</div></div></div>
           <section class="panel overflow-hidden"><div class="table-wrap"><table><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Items summary</th><th>Reason / notes</th><th>Total</th><th>Paid</th><th>Balance due</th><th>Profit</th><th>Actions</th></tr></thead><tbody id="historyBody"></tbody></table></div><div id="historyEmpty" class="empty-state hidden"><i class="fa-regular fa-file-lines text-xl mb-2"></i><div>No saved bills yet.</div></div></section>
         </section>
 
@@ -1044,7 +1043,8 @@
         const total = roundMoney(subtotal + freight + other);
         const amountPaid = Math.max(0, Number($('#amountPaid').value) || 0);
         const paymentDate = $('#paymentDate').value || localDateInputValue();
-        return { number: editingBillNumber || billNo(), date: formatDate(paymentDate), paymentDate, customer: { name: $('#customerName').value.trim(), company: $('#companyName').value.trim(), phone: $('#customerPhone').value.trim(), address: $('#customerAddress').value.trim() }, items, freight, other, subtotal, profit, total, amountPaid, balanceDue: Math.max(0, total - amountPaid), paymentNotes: $('#paymentNotes').value.trim() };
+        const existingCompany = editingBillNumber ? bills.find(bill => bill.number === editingBillNumber)?.customer?.company || '' : '';
+        return { number: editingBillNumber || billNo(), date: formatDate(paymentDate), paymentDate, customer: { name: $('#customerName').value.trim(), company: existingCompany, phone: $('#customerPhone').value.trim(), address: $('#customerAddress').value.trim() }, items, freight, other, subtotal, profit, total, amountPaid, balanceDue: Math.max(0, total - amountPaid), paymentNotes: $('#paymentNotes').value.trim() };
       }
 
       function invoiceMarkup(bill) {
@@ -1067,7 +1067,6 @@
           </section>
           <section class="receipt-customer" aria-label="Customer details">
             <div class="receipt-customer-row"><span class="receipt-label">Customer</span><strong>${escapeHtml(customer.name || 'Walk-in customer')}</strong></div>
-            <div class="receipt-customer-row"><span class="receipt-label">Company</span><span>${escapeHtml(customer.company || '-')}</span></div>
             <div class="receipt-customer-row"><span class="receipt-label">Phone</span><span>${escapeHtml(customer.phone || '-')}</span></div>
             <div class="receipt-customer-row"><span class="receipt-label">Address</span><span>${escapeHtml(customer.address || '-')}</span></div>
           </section>
@@ -1148,14 +1147,26 @@
 
       function renderHistory() {
         const body = $('#historyBody');
-        body.innerHTML = bills.map((bill, index) => {
+        const query = ($('#billSearch')?.value || '').trim().toLocaleLowerCase();
+        const matchingBills = bills.map((bill, index) => ({ bill, index })).filter(({ bill }) => {
+          if (!query) return true;
+          const searchable = [
+            bill.number, bill.date, bill.paymentDate, bill.customer?.name, bill.customer?.company,
+            bill.customer?.phone, bill.customer?.address, bill.paymentNotes,
+            ...(bill.items || []).map(item => item.name)
+          ].join(' ').toLocaleLowerCase();
+          return searchable.includes(query);
+        });
+        body.innerHTML = matchingBills.map(({ bill, index }) => {
           const itemsSummary = (bill.items || []).map(item => `${item.quantity} × ${item.name}`).join(', ') || '-';
           const balanceDue = bill.balanceDue ?? Math.max(0, Number(bill.total || 0) - Number(bill.amountPaid || 0));
           return `<tr><td class="font-bold text-[#315b49]">${escapeHtml(bill.number)}</td><td class="whitespace-nowrap">${escapeHtml(bill.date)}</td><td><div class="font-semibold">${escapeHtml(bill.customer?.name || 'Walk-in customer')}</div>${bill.customer?.company ? `<div class="text-[10px] text-[#829088]">${escapeHtml(bill.customer.company)}</div>` : ''}</td><td>${escapeHtml(itemsSummary)}</td><td>${escapeHtml(bill.paymentNotes || '-')}</td><td class="font-bold whitespace-nowrap">${money(bill.total)}</td><td class="whitespace-nowrap">${money(bill.amountPaid ?? 0)}</td><td class="font-semibold whitespace-nowrap">${money(balanceDue)}</td><td class="font-semibold whitespace-nowrap text-[#376a55]">${money(bill.profit ?? 0)}</td><td><div class="flex gap-1.5"><button class="btn btn-soft !min-h-[30px] !px-2.5" data-view-bill="${index}" title="View invoice"><i class="fa-regular fa-eye"></i><span class="hide-mobile">View</span></button><button class="btn btn-outline !min-h-[30px] !px-2.5" data-edit-bill="${index}" title="Edit saved bill"><i class="fa-solid fa-pen"></i><span class="hide-mobile">Edit</span></button><button class="icon-button" data-delete-bill="${index}" title="Delete saved record" aria-label="Delete ${escapeHtml(bill.number)}"><i class="fa-regular fa-trash-can"></i></button></div></td></tr>`;
         }).join('');
         labelResponsiveTables();
-        $('#historyEmpty').classList.toggle('hidden', bills.length > 0);
-        $('#historyCount').textContent = `${bills.length} ${bills.length === 1 ? 'bill' : 'bills'}`;
+        const emptyMessage = query && bills.length ? `No bills match "${$('#billSearch').value.trim()}".` : 'No saved bills yet.';
+        $('#historyEmpty').querySelector('div').textContent = emptyMessage;
+        $('#historyEmpty').classList.toggle('hidden', matchingBills.length > 0);
+        $('#historyCount').textContent = query ? `${matchingBills.length} of ${bills.length} bills` : `${bills.length} ${bills.length === 1 ? 'bill' : 'bills'}`;
         $$('[data-view-bill]').forEach(button => button.addEventListener('click', () => openBill(Number(button.dataset.viewBill))));
         $$('[data-edit-bill]').forEach(button => button.addEventListener('click', () => editBill(Number(button.dataset.editBill))));
         $$('[data-delete-bill]').forEach(button => button.addEventListener('click', () => deleteBill(Number(button.dataset.deleteBill))));
@@ -1404,7 +1415,7 @@
 
       function resetBill() {
         setBillEditMode(false);
-        $('#customerName').value = ''; $('#companyName').value = ''; $('#customerPhone').value = ''; $('#customerAddress').value = '';
+        $('#customerName').value = ''; $('#customerPhone').value = ''; $('#customerAddress').value = '';
         $('#amountPaid').value = '0'; $('#paymentNotes').value = ''; $('#paymentDate').value = localDateInputValue();
         $('#freightCharge').value = '0'; $('#otherCharge').value = '0'; $('#billItems').innerHTML = '';
         $('#billNumberLabel').textContent = billNo(); addBillRow(); recalculate();
@@ -1425,7 +1436,6 @@
         editingBillNumber = bill.number;
         setBillEditMode(true);
         $('#customerName').value = bill.customer?.name || '';
-        $('#companyName').value = bill.customer?.company || '';
         $('#customerPhone').value = bill.customer?.phone || '';
         $('#customerAddress').value = bill.customer?.address || '';
         $('#freightCharge').value = Number(bill.freight || 0);
@@ -1600,7 +1610,8 @@
       $('#addItemBtn').addEventListener('click', () => addBillRow());
       $('#showDiscount').addEventListener('change', recalculate);
       $$('.charge-input').forEach(input => input.addEventListener('input', recalculate));
-      ['customerName', 'companyName', 'customerPhone', 'customerAddress'].forEach(id => $(`#${id}`).addEventListener('input', recalculate));
+      ['customerName', 'customerPhone', 'customerAddress'].forEach(id => $(`#${id}`).addEventListener('input', recalculate));
+      $('#billSearch').addEventListener('input', renderHistory);
       ['amountPaid', 'paymentNotes', 'paymentDate'].forEach(id => $(`#${id}`).addEventListener('input', recalculate));
       $('#updateBillBtn').addEventListener('click', () => { renderPreview(); showToast('Invoice preview updated.'); });
       $('#printBillBtn').addEventListener('click', () => printBill());
