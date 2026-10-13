@@ -550,6 +550,7 @@
         <button class="nav-link hidden" data-page="inventory" data-admin-only><i class="fa-solid fa-boxes-stacked"></i><span>Stock & Purchases</span></button>
         <button class="nav-link hidden" data-page="expenses" data-admin-only><i class="fa-solid fa-wallet"></i><span>Expenses</span></button>
         <button class="nav-link hidden" data-page="history" data-admin-only><i class="fa-solid fa-clock-rotate-left"></i><span>Bill History</span></button>
+        <button class="nav-link hidden" data-page="quotations" data-admin-only><i class="fa-solid fa-file-circle-check"></i><span>Quotations Management</span></button>
         <button class="nav-link hidden" data-page="credit" data-admin-only><i class="fa-solid fa-hand-holding-dollar"></i><span>Credit / Payment Ledger</span></button>
         <button class="nav-link" data-page="financials"><i class="fa-solid fa-chart-line"></i><span>Admin / Profit Summary</span></button>
         <button id="adminLogoutBtn" class="nav-link hidden" type="button"><i class="fa-solid fa-lock"></i><span>Lock Admin</span></button>
@@ -572,6 +573,7 @@
         <div class="header-actions flex gap-2">
           <button id="topPrintBtn" class="btn btn-outline" type="button" title="Print current invoice"><i class="fa-solid fa-print"></i><span>Print</span></button>
           <button id="topDownloadBtn" class="btn btn-outline download-bill-btn" type="button" title="Download invoice as PDF"><i class="fa-solid fa-download"></i><span>Download PDF</span></button>
+          <button id="topSaveQuotationBtn" class="btn btn-outline" type="button"><i class="fa-solid fa-file-circle-plus"></i><span>Save as Quotation</span></button>
           <button id="topSaveBtn" class="btn btn-primary" type="button"><i class="fa-solid fa-floppy-disk"></i><span>Save Bill</span></button>
         </div>
       </header>
@@ -585,7 +587,7 @@
           <div class="billing-layout">
             <div class="space-y-4 min-w-0">
               <section class="panel p-4 sm:p-5">
-                <div class="flex justify-between items-start mb-4"><div><div class="section-title">Customer details</div><div class="section-caption">Invoice <span id="billNumberLabel"></span></div></div><span class="text-[10px] font-bold text-[#51806a] bg-[#edf4ef] px-2.5 py-1 rounded-full">NEW SALE</span></div>
+                <div class="flex justify-between items-start mb-4"><div><div class="section-title">Customer details</div><div class="section-caption"><span id="billingDocumentLabel">Invoice</span> <span id="billNumberLabel"></span></div></div><span id="billingDocumentBadge" class="text-[10px] font-bold text-[#51806a] bg-[#edf4ef] px-2.5 py-1 rounded-full">NEW SALE</span></div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div><label class="field-label" for="customerName">Customer name</label><input class="field" id="customerName" placeholder="Walk-in customer" autocomplete="name"></div>
                   <div><label class="field-label" for="customerPhone">Phone number</label><input class="field" id="customerPhone" placeholder="03xx xxxxxxx" inputmode="tel"></div>
@@ -603,7 +605,9 @@
                   <div><label class="field-label" for="freightCharge">Freight charges (Rs.)</label><input class="field charge-input" type="number" id="freightCharge" min="0" step="0.01" value="0"></div>
                   <div><label class="field-label" for="otherCharge">Other charges (Rs.)</label><input class="field charge-input" type="number" id="otherCharge" min="0" step="0.01" value="0"></div>
                 </div>
-                <div class="flex items-center justify-between mt-4 px-1"><span class="text-xs text-[#77857e]">Items subtotal</span><strong id="subtotalText" class="text-sm text-[#26372f]">Rs. 0.00</strong></div>
+                <div class="flex items-center justify-between mt-4 px-1"><span class="text-xs text-[#77857e]">Items subtotal</span><strong id="grossSubtotalText" class="text-sm text-[#26372f]">Rs. 0.00</strong></div>
+                <div id="totalDiscountRow" class="flex items-center justify-between mt-2 px-1"><span class="text-xs text-[#77857e]">Total Discount</span><strong id="totalDiscountText" class="text-sm text-[#26372f]">Rs. 0.00</strong></div>
+                <div id="discountedSubtotalRow" class="flex items-center justify-between mt-2 px-1"><span class="text-xs text-[#77857e]">Subtotal after discount</span><strong id="subtotalText" class="text-sm text-[#26372f]">Rs. 0.00</strong></div>
                 <div class="flex items-center justify-between mt-2 px-1"><span class="text-xs text-[#77857e]">Estimated bill profit</span><strong id="billProfitText" class="text-sm text-[#376a55]">Rs. 0.00</strong></div>
                 <div class="flex items-center justify-between mt-2 px-1"><span class="text-sm font-bold text-[#26372f]">Grand total</span><strong id="grandTotalText" class="text-lg font-bold text-[#1d493b]">Rs. 0.00</strong></div>
               </section>
@@ -626,6 +630,7 @@
                 <button id="printBillBtn" class="btn btn-outline" type="button"><i class="fa-solid fa-print"></i>Print / Save PDF</button>
                 <button id="downloadBillBtn" class="btn btn-outline download-bill-btn" type="button"><i class="fa-solid fa-download"></i>Download PDF</button>
                 <button id="cancelBillEditBtn" class="btn btn-outline hidden" type="button"><i class="fa-solid fa-xmark"></i>Cancel edit</button>
+                <button id="saveQuotationBtn" class="btn btn-outline" type="button"><i class="fa-solid fa-file-circle-plus"></i>Save as Quotation</button>
                 <button id="saveBillBtn" class="btn btn-primary" type="button"><i class="fa-solid fa-floppy-disk"></i>Save Bill</button>
               </div>
             </div>
@@ -689,6 +694,15 @@
           <section class="panel overflow-hidden"><div class="table-wrap"><table><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Items summary</th><th>Reason / notes</th><th>Total</th><th>Paid</th><th>Balance due</th><th>Profit</th><th>Actions</th></tr></thead><tbody id="historyBody"></tbody></table></div><div id="historyEmpty" class="empty-state hidden"><i class="fa-regular fa-file-lines text-xl mb-2"></i><div>No saved bills yet.</div></div></section>
         </section>
 
+        <section id="page-quotations" class="page">
+          <div class="mb-5"><h1 class="text-xl font-bold text-[#20342c]">Quotations Management</h1><p class="text-xs text-[#77857e] mt-1">Review estimates, update pending quotations, and convert approved quotations into bills.</p></div>
+          <section class="panel overflow-hidden">
+            <div class="p-4 sm:px-5 border-b border-[#edf1ee] flex items-center justify-between gap-3"><div><div class="section-title">Saved quotations</div><div class="section-caption">Pending quotations do not reserve or deduct inventory.</div></div><span id="quotationCount" class="text-[10px] text-[#78877f]"></span></div>
+            <div class="table-wrap"><table><thead><tr><th>Quotation #</th><th>Date</th><th>Customer Name</th><th>Phone</th><th>Total Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody id="quotationBody"></tbody></table></div>
+            <div id="quotationEmpty" class="empty-state hidden"><i class="fa-regular fa-file-lines text-xl mb-2"></i><div>No quotations saved yet.</div></div>
+          </section>
+        </section>
+
         <section id="page-credit" class="page">
           <div class="mb-5"><h1 class="text-xl font-bold text-[#20342c]">Credit / Payment Ledger</h1><p class="text-xs text-[#77857e] mt-1">Outstanding customer balances from saved bills.</p></div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
@@ -735,9 +749,10 @@
       );
       const BUSINESS = { name: 'Qadeer Trader', address: 'Building No. 216, Askari Bank, 1st Floor, FF, Phase 4, DHA Lahore', phone: '03054003812' };
       const ADMIN_CREDENTIALS = { email: 'ahsannaqvi1122@gmail.com', password: '@hsan1214' };
-      const ADMIN_PAGES = new Set(['inventory', 'expenses', 'history', 'credit', 'financials']);
+      const ADMIN_PAGES = new Set(['inventory', 'expenses', 'history', 'quotations', 'credit', 'financials']);
       let products = [];
       let bills = [];
+      let quotations = [];
       let expenses = [];
       let ledgerEntries = [];
       let billCounter = 1;
@@ -745,6 +760,7 @@
       let activeModalBill = null;
       let activeLedgerBillNumber = null;
       let editingBillNumber = null;
+      let editingQuotationId = null;
       let isAdminAuthenticated = false;
       let toastTimer;
       const $ = (selector, root = document) => root.querySelector(selector);
@@ -825,7 +841,7 @@
               const billId = billIds.get(billNumber);
               if (!billId) return [];
               return (Array.isArray(bill.payments) ? bill.payments : []).map((payment, index) => ({
-                bill_id: billId,
+                bill_id: billId, 
                 payment_number: index + 1,
                 amount: Number(payment.amount),
                 paid_amount: Number(payment.amount),
@@ -901,6 +917,18 @@
           return match ? Math.max(next, Number(match[1]) + 1) : next;
         }, 1);
       }
+      async function loadQuotations() {
+        const { data, error } = await supabase.from('quotations').select('id,quotation_number,quotation_data,status,bill_id,created_at').order('created_at', { ascending: false });
+        if (error) throw error;
+        quotations = data.map(row => ({
+          ...row.quotation_data,
+          id: row.id,
+          number: row.quotation_number,
+          status: row.status,
+          billId: row.bill_id,
+          createdAt: row.created_at
+        }));
+      }
       async function loadLedger() {
         const { data, error } = await supabase.from('ledger').select('id,bill_id,payment_number,amount,payment_date,notes,created_at').order('created_at');
         if (error) throw error;
@@ -937,8 +965,8 @@
       }
       async function loadBusinessData() {
         await migrateLegacyData();
-        const [inventoryResult, billsResult, ledgerResult, expensesResult] = await Promise.allSettled([loadInventory(), loadBills(), loadLedger(), loadExpenses()]);
-        const failure = [inventoryResult, billsResult, ledgerResult, expensesResult].find(result => result.status === 'rejected');
+        const [inventoryResult, billsResult, quotationsResult, ledgerResult, expensesResult] = await Promise.allSettled([loadInventory(), loadBills(), loadQuotations(), loadLedger(), loadExpenses()]);
+        const failure = [inventoryResult, billsResult, quotationsResult, ledgerResult, expensesResult].find(result => result.status === 'rejected');
         if (failure) throw failure.reason;
         applyLedgerPayments();
         businessDataReady = true;
@@ -946,10 +974,12 @@
         updateProductOptions();
         renderInventory();
         renderHistory();
+        renderQuotations();
         renderExpenses();
         addBillRow();
         supabase.channel('qadeer-traders-pos')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'bills' }, refreshRemoteData)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'quotations' }, refreshRemoteData)
           .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, refreshRemoteData)
           .on('postgres_changes', { event: '*', schema: 'public', table: 'ledger' }, refreshRemoteData)
           .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, refreshRemoteData)
@@ -961,10 +991,11 @@
       }
       async function refreshRemoteData() {
         try {
-          await Promise.all([loadInventory(), loadBills(), loadLedger(), loadExpenses()]);
+          await Promise.all([loadInventory(), loadBills(), loadQuotations(), loadLedger(), loadExpenses()]);
           applyLedgerPayments();
           renderInventory();
           renderHistory();
+          renderQuotations();
           renderExpenses();
         } catch (error) {
           showToast(`Could not sync updated business data: ${error.message || 'Supabase request failed.'}`);
@@ -1045,7 +1076,9 @@
             profit
           };
         }).filter(item => item.name && item.quantity > 0 && item.rate >= 0);
+        const grossSubtotal = roundMoney(items.reduce((sum, item) => sum + item.subtotal, 0));
         const subtotal = roundMoney(items.reduce((sum, item) => sum + item.final_amount, 0));
+        const totalDiscount = roundMoney(items.reduce((sum, item) => sum + item.discount, 0));
         const profit = roundMoney(items.reduce((sum, item) => sum + item.profit, 0));
         const freight = Math.max(0, Number($('#freightCharge').value) || 0);
         const other = Math.max(0, Number($('#otherCharge').value) || 0);
@@ -1053,11 +1086,14 @@
         const amountPaid = Math.max(0, Number($('#amountPaid').value) || 0);
         const paymentDate = $('#paymentDate').value || localDateInputValue();
         const existingCompany = editingBillNumber ? bills.find(bill => bill.number === editingBillNumber)?.customer?.company || '' : '';
-        return { number: editingBillNumber || billNo(), date: formatDate(paymentDate), paymentDate, customer: { name: $('#customerName').value.trim(), company: existingCompany, phone: $('#customerPhone').value.trim(), address: $('#customerAddress').value.trim() }, items, freight, other, subtotal, profit, total, amountPaid, balanceDue: Math.max(0, total - amountPaid), paymentNotes: $('#paymentNotes').value.trim() };
+        return { number: editingBillNumber || billNo(), date: formatDate(paymentDate), paymentDate, customer: { name: $('#customerName').value.trim(), company: existingCompany, phone: $('#customerPhone').value.trim(), address: $('#customerAddress').value.trim() }, items, freight, other, grossSubtotal, subtotal, totalDiscount, profit, total, amountPaid, balanceDue: Math.max(0, total - amountPaid), paymentNotes: $('#paymentNotes').value.trim() };
       }
 
       function invoiceMarkup(bill) {
         const customer = bill.customer || {};
+        const totalDiscount = bill.totalDiscount ?? (bill.items || []).reduce((sum, item) => sum + Number(item.discount || 0), 0);
+        const grossSubtotal = bill.grossSubtotal ?? (bill.items || []).reduce((sum, item) => sum + Number(item.subtotal ?? (Number(item.quantity || 0) * Number(item.rate ?? item.price ?? 0))), 0);
+        const subtotalAfterDiscount = bill.subtotal ?? Math.max(0, grossSubtotal - totalDiscount);
         const rows = (bill.items || []).map(item => `<tr>
           <td><div class="receipt-item-name">${escapeHtml(item.name)}</div></td>
           <td class="receipt-numeric">${Number(item.quantity)}</td>
@@ -1084,7 +1120,8 @@
             <tbody>${rows || `<tr><td class="receipt-empty" colspan="${$('#showDiscount').checked ? 5 : 4}">No items added</td></tr>`}</tbody>
           </table>
           <section class="receipt-totals" aria-label="Invoice totals">
-            <div class="receipt-total-row"><span>Subtotal</span><span class="receipt-total-value">${money(bill.subtotal)}</span></div>
+            <div class="receipt-total-row"><span>Subtotal</span><span class="receipt-total-value">${money(grossSubtotal)}</span></div>
+            ${$('#showDiscount').checked ? `<div class="receipt-total-row"><span>Total Discount</span><span class="receipt-total-value">-${money(totalDiscount)}</span></div><div class="receipt-total-row"><span>Subtotal after discount</span><span class="receipt-total-value">${money(subtotalAfterDiscount)}</span></div>` : ''}
             <div class="receipt-total-row"><span>Freight</span><span class="receipt-total-value">${money(bill.freight)}</span></div>
             <div class="receipt-total-row"><span>Other charges</span><span class="receipt-total-value">${money(bill.other)}</span></div>
             <div class="receipt-total-row receipt-grand-total"><span>Total Amount</span><span class="receipt-total-value">${money(bill.total)}</span></div>
@@ -1127,6 +1164,10 @@
         $('#itemsHeading').classList.toggle('discount-hidden', discountHidden);
         $('#billItems').classList.toggle('discount-hidden', discountHidden);
         $$('.discount-col').forEach(column => column.classList.toggle('discount-col-hidden', discountHidden));
+        $('#totalDiscountRow').classList.toggle('hidden', discountHidden);
+        $('#discountedSubtotalRow').classList.toggle('hidden', discountHidden);
+        $('#grossSubtotalText').textContent = money(draft.grossSubtotal);
+        $('#totalDiscountText').textContent = money(draft.totalDiscount);
         $('#subtotalText').textContent = money(draft.subtotal);
         $('#billProfitText').textContent = money(draft.profit);
         $('#grandTotalText').textContent = money(draft.total);
@@ -1181,6 +1222,23 @@
         $$('[data-delete-bill]').forEach(button => button.addEventListener('click', () => deleteBill(Number(button.dataset.deleteBill))));
         renderCreditLedger();
         renderFinancialSummary();
+      }
+
+      function renderQuotations() {
+        const body = $('#quotationBody');
+        body.innerHTML = quotations.map((quotation, index) => {
+          const approved = quotation.status === 'Approved';
+          const actions = approved
+            ? '<span class="text-[11px] text-[#718078]">Converted</span>'
+            : `<button class="btn btn-outline !min-h-[30px] !px-2.5" data-edit-quotation="${index}" title="Edit quotation"><i class="fa-solid fa-pen"></i><span>Edit</span></button><button class="btn btn-primary !min-h-[30px] !px-2.5" data-approve-quotation="${index}" title="Approve and convert to bill"><i class="fa-solid fa-check"></i><span>Approve &amp; Convert</span></button>`;
+          return `<tr><td class="font-bold text-[#315b49]">${escapeHtml(quotation.number)}</td><td class="whitespace-nowrap">${escapeHtml(formatDate(quotation.createdAt?.slice(0, 10)))}</td><td>${escapeHtml(quotation.customer?.name || 'Walk-in customer')}</td><td>${escapeHtml(quotation.customer?.phone || '-')}</td><td class="font-bold whitespace-nowrap">${money(quotation.total)}</td><td><span class="pill ${approved ? 'pill-green' : 'pill-amber'}">${approved ? 'Approved' : 'Pending'}</span></td><td><div class="flex flex-wrap gap-1.5">${actions}<button class="icon-button" data-delete-quotation="${index}" title="Delete quotation permanently" aria-label="Delete ${escapeHtml(quotation.number)}"><i class="fa-regular fa-trash-can"></i></button></div></td></tr>`;
+        }).join('');
+        labelResponsiveTables();
+        $('#quotationEmpty').classList.toggle('hidden', quotations.length > 0);
+        $('#quotationCount').textContent = `${quotations.length} ${quotations.length === 1 ? 'quotation' : 'quotations'}`;
+        $$('[data-edit-quotation]').forEach(button => button.addEventListener('click', () => editQuotation(Number(button.dataset.editQuotation))));
+        $$('[data-approve-quotation]').forEach(button => button.addEventListener('click', () => approveQuotation(Number(button.dataset.approveQuotation))));
+        $$('[data-delete-quotation]').forEach(button => button.addEventListener('click', () => deleteQuotation(Number(button.dataset.deleteQuotation))));
       }
 
       function renderFinancialSummary() {
@@ -1272,11 +1330,12 @@
         }
         $$('.page').forEach(page => page.classList.toggle('active', page.id === `page-${name}`));
         $$('.nav-link').forEach(link => link.classList.toggle('active', link.dataset.page === name));
-        const copy = { billing: ['Create a bill', 'Prepare a customer invoice'], inventory: ['Stock & purchases', 'Manage products and incoming stock'], expenses: ['Expenses & investments', 'Track business outflows by category'], history: ['Bill history', 'Review saved invoices'], credit: ['Credit / Payment Ledger', 'Track outstanding customer balances'], financials: ['Admin / Profit Summary', 'Review revenue, cost, and order profit'] }[name];
+        const copy = { billing: ['Create a bill', 'Prepare a customer invoice'], inventory: ['Stock & purchases', 'Manage products and incoming stock'], expenses: ['Expenses & investments', 'Track business outflows by category'], history: ['Bill history', 'Review saved invoices'], quotations: ['Quotations Management', 'Review and approve customer estimates'], credit: ['Credit / Payment Ledger', 'Track outstanding customer balances'], financials: ['Admin / Profit Summary', 'Review revenue, cost, and order profit'] }[name];
         $('#topTitle').textContent = copy[0]; $('#topSubtitle').textContent = copy[1];
         const showBillingActions = name === 'billing';
         $('#topPrintBtn').classList.toggle('hidden', !showBillingActions);
         $('#topDownloadBtn').classList.toggle('hidden', !showBillingActions);
+        $('#topSaveQuotationBtn').classList.toggle('hidden', !showBillingActions);
         $('#topSaveBtn').classList.toggle('hidden', !showBillingActions);
       }
 
@@ -1351,35 +1410,189 @@
         return true;
       }
 
+      function validateQuotation(draft) {
+        if (!draft.items.length) { showToast('Add at least one complete item before saving a quotation.'); return false; }
+        const incomplete = $$('.product-row').some(row => {
+          const name = $('.item-name', row).value.trim();
+          return name && (!Number($('.item-qty', row).value) || Number($('.item-qty', row).value) <= 0 || $('.item-cost', row).value === '' || Number($('.item-cost', row).value) < 0 || $('.item-price', row).value === '' || Number($('.item-price', row).value) < 0 || ($('#showDiscount').checked && Number($('.item-discount', row).value) < 0));
+        });
+        if (incomplete) { showToast('Check item quantities, cost prices, rates, and discounts.'); return false; }
+        return true;
+      }
+
+      async function saveQuotation() {
+        if (!requireReadyData()) return;
+        if (editingBillNumber) { showToast('Cancel bill editing before saving a quotation.'); return; }
+        const draft = collectDraft();
+        if (!validateQuotation(draft)) return;
+        const quotationId = editingQuotationId || newId();
+        const quotationData = {
+          ...draft,
+          amountPaid: 0,
+          balanceDue: draft.total,
+          payments: [],
+          showDiscount: $('#showDiscount').checked,
+          status: 'Pending'
+        };
+        const buttons = [$('#saveQuotationBtn'), $('#topSaveQuotationBtn')];
+        buttons.forEach(button => { button.disabled = true; });
+        let quotationNumber;
+        try {
+          const { data, error } = await supabase.rpc('save_quotation', {
+            p_id: quotationId,
+            p_quotation_data: quotationData
+          });
+          if (error) throw error;
+          quotationNumber = data;
+        } catch (error) {
+          buttons.forEach(button => { button.disabled = false; });
+          showToast(`Could not save quotation: ${error.message || 'Supabase request failed.'}`);
+          return;
+        }
+        businessDataReady = false;
+        try {
+          await loadQuotations();
+          businessDataReady = true;
+        } catch (error) {
+          businessDataReady = true;
+          buttons.forEach(button => { button.disabled = false; });
+          showToast(`Quotation saved, but the latest data could not be reloaded: ${error.message || 'Supabase request failed.'}`);
+          return;
+        }
+        buttons.forEach(button => { button.disabled = false; });
+        renderQuotations();
+        showToast(`${editingQuotationId ? 'Quotation updated' : 'Quotation saved'}: ${quotationNumber}.`);
+        resetBill();
+      }
+
+      function editQuotation(index) {
+        const quotation = quotations[index];
+        if (!quotation || quotation.status !== 'Pending') return;
+        setBillEditMode(false);
+        editingQuotationId = quotation.id;
+        setQuotationEditMode(true);
+        $('#showDiscount').checked = quotation.showDiscount !== false;
+        $('#customerName').value = quotation.customer?.name || '';
+        $('#customerPhone').value = quotation.customer?.phone || '';
+        $('#customerAddress').value = quotation.customer?.address || '';
+        $('#freightCharge').value = Number(quotation.freight || 0);
+        $('#otherCharge').value = Number(quotation.other || 0);
+        $('#amountPaid').value = '0';
+        $('#paymentDate').value = localDateInputValue();
+        $('#paymentNotes').value = quotation.paymentNotes || '';
+        $('#billItems').innerHTML = '';
+        (quotation.items || []).forEach(item => addBillRow(item));
+        if (!quotation.items?.length) addBillRow();
+        $('#billNumberLabel').textContent = quotation.number;
+        switchPage('billing');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showToast(`Editing ${quotation.number}.`);
+      }
+
+      async function deleteQuotation(index) {
+        if (!requireReadyData()) return;
+        const quotation = quotations[index];
+        if (!quotation || !window.confirm(`Permanently delete quotation ${quotation.number}?`)) return;
+        try {
+          const { error } = await supabase.from('quotations').delete().eq('id', quotation.id);
+          if (error) throw error;
+          await loadQuotations();
+          renderQuotations();
+          showToast(`${quotation.number} deleted.`);
+        } catch (error) {
+          showToast(`Could not delete quotation: ${error.message || 'Supabase request failed.'}`);
+        }
+      }
+
+      async function approveQuotation(index) {
+        if (!requireReadyData()) return;
+        const quotation = quotations[index];
+        if (!quotation || quotation.status !== 'Pending') return;
+        if (!window.confirm(`Approve ${quotation.number} and convert it to a bill? Inventory will be updated.`)) return;
+        const billId = newId();
+        let convertedBillId = billId;
+        let converted = false;
+        for (let attempt = 0; attempt < 3 && !converted; attempt += 1) {
+          try {
+            const { data, error } = await supabase.rpc('approve_quotation', {
+              p_quotation_id: quotation.id,
+              p_bill_id: billId,
+              p_bill_number: billNo()
+            });
+            if (error) throw error;
+            convertedBillId = data || billId;
+            converted = true;
+          } catch (error) {
+            if (error.code === '23505' && attempt < 2) {
+              await loadBills();
+              continue;
+            }
+            showToast(`Could not approve quotation: ${error.message || 'Supabase request failed.'}`);
+            return;
+          }
+        }
+        businessDataReady = false;
+        try {
+          await Promise.all([loadInventory(), loadBills(), loadQuotations(), loadLedger()]);
+          applyLedgerPayments();
+          businessDataReady = true;
+        } catch (error) {
+          businessDataReady = true;
+          showToast(`Quotation approved, but the latest data could not be reloaded: ${error.message || 'Supabase request failed.'}`);
+          return;
+        }
+        renderInventory();
+        renderHistory();
+        renderQuotations();
+        const billIndex = bills.findIndex(bill => bill.id === convertedBillId);
+        if (billIndex >= 0) editBill(billIndex);
+        showToast(`${quotation.number} approved and converted to ${bills[billIndex]?.number || 'a bill'}.`);
+      }
+
       async function saveBill() {
         if (!requireReadyData()) return;
+        if (editingQuotationId) { showToast('Save the quotation update or cancel quotation editing before saving a bill.'); return; }
         const draft = collectDraft();
         if (!validateBill(draft)) return;
         if (editingBillNumber) {
           const billIndex = bills.findIndex(bill => bill.number === editingBillNumber);
           const original = bills[billIndex];
           if (!original) { showToast('This saved bill could not be found.'); cancelBillEdit(); return; }
-          const updated = { ...original, ...draft, amountPaid: Number(original.amountPaid || 0), payments: Array.isArray(original.payments) ? original.payments : [], paymentDate: original.paymentDate || draft.paymentDate, balanceDue: Math.max(0, draft.total - Number(original.amountPaid || 0)), id: original.id, createdAt: original.createdAt };
+          const originalPaid = Number(original.amountPaid || 0);
+          if (draft.amountPaid < originalPaid) { showToast('Paid amount cannot be reduced here. Record additional payments in the payment ledger.'); return; }
+          if (draft.amountPaid > draft.total) { showToast('Paid amount cannot exceed the updated bill total.'); return; }
+          const additionalPayment = roundMoney(draft.amountPaid - originalPaid);
+          const updated = { ...original, ...draft, amountPaid: originalPaid, payments: Array.isArray(original.payments) ? original.payments : [], balanceDue: Math.max(0, draft.total - originalPaid), id: original.id, createdAt: original.createdAt };
           try {
-            const { error } = await supabase.rpc('save_bill', {
+            const { error } = await supabase.rpc('save_bill_with_payment_adjustment', {
               p_id: updated.id,
               p_bill_number: updated.number,
               p_bill_data: updated,
-              p_items: updated.items
+              p_items: updated.items,
+              p_additional_payment: additionalPayment,
+              p_payment_date: draft.paymentDate,
+              p_payment_notes: draft.paymentNotes
             });
             if (error) throw error;
-            businessDataReady = false;
-            await Promise.all([loadInventory(), loadBills(), loadLedger()]);
-            applyLedgerPayments();
-            businessDataReady = true;
           } catch (error) {
             showToast(`Could not update bill: ${error.message || 'Supabase request failed.'}`);
             return;
           }
+          businessDataReady = false;
+          try {
+            await Promise.all([loadInventory(), loadBills(), loadLedger()]);
+            applyLedgerPayments();
+            businessDataReady = true;
+          } catch (error) {
+            businessDataReady = true;
+            showToast(`Bill updated, but the latest data could not be reloaded: ${error.message || 'Supabase request failed.'}`);
+            return;
+          }
+          const persisted = bills.find(bill => bill.id === updated.id) || updated;
           renderInventory(); renderHistory();
-          $('#invoicePreview').innerHTML = invoiceMarkup(updated);
-          $('#printInvoice').innerHTML = invoiceMarkup(updated);
-          showToast(`${updated.number} updated.`);
+          $('#invoicePreview').innerHTML = invoiceMarkup(persisted);
+          $('#printInvoice').innerHTML = invoiceMarkup(persisted);
+          showToast(`${persisted.number} updated.`);
           resetBill();
           return;
         }
@@ -1424,26 +1637,46 @@
 
       function resetBill() {
         setBillEditMode(false);
+        setQuotationEditMode(false);
         $('#customerName').value = ''; $('#customerPhone').value = ''; $('#customerAddress').value = '';
         $('#amountPaid').value = '0'; $('#paymentNotes').value = ''; $('#paymentDate').value = localDateInputValue();
         $('#freightCharge').value = '0'; $('#otherCharge').value = '0'; $('#billItems').innerHTML = '';
+        $('#billingDocumentLabel').textContent = 'Invoice';
+        $('#billingDocumentBadge').textContent = 'NEW SALE';
         $('#billNumberLabel').textContent = billNo(); addBillRow(); recalculate();
       }
 
       function setBillEditMode(enabled) {
         if (!enabled) editingBillNumber = null;
-        $('#amountPaid').disabled = enabled;
-        $('#paymentDate').disabled = enabled;
-        $('#cancelBillEditBtn').classList.toggle('hidden', !enabled);
+        $('#amountPaid').disabled = false;
+        $('#paymentDate').disabled = false;
+        $('#cancelBillEditBtn').classList.toggle('hidden', !enabled && !editingQuotationId);
+        if (enabled) {
+          $('#billingDocumentLabel').textContent = 'Invoice';
+          $('#billingDocumentBadge').textContent = 'EDIT BILL';
+        } else if (!editingQuotationId) {
+          $('#billingDocumentBadge').textContent = 'NEW SALE';
+        }
         $('#saveBillBtn').innerHTML = enabled ? '<i class="fa-solid fa-check"></i>Update Bill' : '<i class="fa-solid fa-floppy-disk"></i>Save Bill';
         $('#topSaveBtn').innerHTML = enabled ? '<i class="fa-solid fa-check"></i><span>Update Bill</span>' : '<i class="fa-solid fa-floppy-disk"></i><span>Save Bill</span>';
+      }
+
+      function setQuotationEditMode(enabled) {
+        if (!enabled) editingQuotationId = null;
+        $('#saveQuotationBtn').innerHTML = enabled ? '<i class="fa-solid fa-check"></i>Update Quotation' : '<i class="fa-solid fa-file-circle-plus"></i>Save as Quotation';
+        $('#topSaveQuotationBtn').innerHTML = enabled ? '<i class="fa-solid fa-check"></i><span>Update Quotation</span>' : '<i class="fa-solid fa-file-circle-plus"></i><span>Save as Quotation</span>';
+        $('#cancelBillEditBtn').classList.toggle('hidden', !enabled && !editingBillNumber);
+        $('#billingDocumentLabel').textContent = enabled ? 'Quotation' : 'Invoice';
+        $('#billingDocumentBadge').textContent = enabled ? 'QUOTATION' : 'NEW SALE';
       }
 
       function editBill(index) {
         const bill = bills[index];
         if (!bill) return;
+        setQuotationEditMode(false);
         editingBillNumber = bill.number;
         setBillEditMode(true);
+        $('#showDiscount').checked = bill.showDiscount !== false;
         $('#customerName').value = bill.customer?.name || '';
         $('#customerPhone').value = bill.customer?.phone || '';
         $('#customerAddress').value = bill.customer?.address || '';
@@ -1462,9 +1695,9 @@
       }
 
       function cancelBillEdit() {
-        if (!editingBillNumber) return;
+        if (!editingBillNumber && !editingQuotationId) return;
         resetBill();
-        showToast('Bill edit cancelled.');
+        showToast('Editing cancelled.');
       }
 
       function openBill(index) {
@@ -1628,6 +1861,8 @@
       $$('.download-bill-btn').forEach(button => button.addEventListener('click', downloadBillPdf));
       $('#saveBillBtn').addEventListener('click', saveBill);
       $('#topSaveBtn').addEventListener('click', saveBill);
+      $('#saveQuotationBtn').addEventListener('click', saveQuotation);
+      $('#topSaveQuotationBtn').addEventListener('click', saveQuotation);
       $('#cancelBillEditBtn').addEventListener('click', cancelBillEdit);
       $('#purchaseForm').addEventListener('submit', async event => {
         event.preventDefault();
